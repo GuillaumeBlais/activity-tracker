@@ -1,0 +1,10 @@
+# Dépendances principales
+pynput>=1.7.6          # Capture souris + clavier (obligatoire)
+
+# Dépendances optionnelles — le code fonctionne sans, mais avec moins de features
+pystray>=0.19.4        # Icône dans la barre des tâches (system tray)
+Pillow>=10.0.0         # Requis par pystray pour générer l'icône
+nltk>=3.8.1            # Stemming FR/EN pour regrouper les variantes de mots
+
+# Après installation de nltk, télécharger les stemmers :
+#   python -c "import nltk; nltk.download('punkt')"

@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Activity Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f1f3f8;--surface:#fff;--s2:#f5f6fa;--s3:#eceef5;
+  --a1:#4f46e5;--a2:#db2777;--a3:#059669;--a4:#d97706;--a5:#7c3aed;--a6:#0891b2;
+  --text:#111827;--muted:#6b7280;--border:#e5e7eb;--b2:#d1d5db;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 4px 14px rgba(0,0,0,.09);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh}
+
+/* NAV */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 28px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100;box-shadow:var(--sh)}
+.brand{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--a1);
+  padding:16px 0;margin-right:28px;white-space:nowrap}
+.tabs{display:flex;height:53px}
+.tab{padding:0 18px;font-size:13px;font-weight:500;color:var(--muted);
+  border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;gap:7px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--a1);border-bottom-color:var(--a1)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.sdot{width:7px;height:7px;border-radius:50%;background:#d1d5db;flex-shrink:0}
+.sdot.live{background:#10b981;box-shadow:0 0 0 2px #d1fae5;animation:pulse 2s infinite}
+.sdot.err{background:#ef4444}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.stxt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.syncl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.rbar{width:70px;height:3px;background:var(--border);border-radius:99px;overflow:hidden}
+.rbar-f{height:100%;background:var(--a1);border-radius:99px;transition:width 1s linear}
+
+/* CONTENT */
+.content{max-width:1600px;margin:0 auto;padding:22px 28px}
+.panel{display:none}.panel.active{display:block}
+
+/* PERIOD BAR */
+.pbar{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  padding:11px 16px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  margin-bottom:16px;box-shadow:var(--sh)}
+.plbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;
+  color:var(--muted);text-transform:uppercase;white-space:nowrap}
+.pbtns{display:flex;gap:4px;flex-wrap:wrap}
+.pb{padding:4px 11px;border-radius:6px;border:1px solid var(--b2);background:transparent;
+  color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .14s;
+  white-space:nowrap;font-family:'Inter',sans-serif}
+.pb:hover{border-color:var(--a1);color:var(--a1)}
+.pb.on{background:var(--a1);border-color:var(--a1);color:#fff}
+.pb.cmp{border-color:var(--a2);color:var(--a2)}.pb.cmp.on{background:var(--a2);color:#fff}
+.psep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.ptag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--a1);
+  background:#ede9fe;padding:3px 9px;border-radius:5px;white-space:nowrap}
+.cbar{display:none;background:var(--surface);border:1px solid var(--border);
+  border-radius:11px;padding:9px 16px;margin-bottom:16px;
+  align-items:center;gap:9px;flex-wrap:wrap;box-shadow:var(--sh)}
+.cbar.show{display:flex}
+.din{background:var(--s2);border:1px solid var(--b2);border-radius:6px;
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 9px;cursor:pointer}
+.din:focus{outline:none;border-color:var(--a1)}
+.abtn{padding:4px 13px;border-radius:6px;background:var(--a1);border:none;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
+.cmpb{display:none;margin-bottom:14px;padding:9px 14px;background:#fff0f7;border:1px solid #fbc4dd;
+  border-radius:9px;font-size:12px;color:var(--a2);align-items:center;gap:10px}
+.cmpb.show{display:flex}
+.cmpx{margin-left:auto;background:none;border:1px solid var(--a2);color:var(--a2);
+  padding:2px 9px;border-radius:5px;cursor:pointer;font-size:11px}
+
+/* GRID */
+.g{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+.s2{grid-column:span 2}.s3{grid-column:span 3}.s4{grid-column:span 4}
+.s5{grid-column:span 5}.s6{grid-column:span 6}.s7{grid-column:span 7}
+.s8{grid-column:span 8}.s9{grid-column:span 9}.s12{grid-column:span 12}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+  padding:16px;box-shadow:var(--sh);animation:fi .3s ease backwards;overflow:hidden}
+@keyframes fi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.card:nth-child(n){animation-delay:calc(var(--i,0)*.04s)}
+.cl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.09em;
+  color:var(--muted);text-transform:uppercase;margin-bottom:9px}
+.cv{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.csub{font-size:12px;color:var(--muted);margin-top:4px}
+.c1{color:var(--a1)}.c2{color:var(--a2)}.c3{color:var(--a3)}
+.c4{color:var(--a4)}.c5{color:var(--a5)}.c6{color:var(--a6)}
+.cw{color:var(--text)}
+.cmprow{display:flex;align-items:baseline;gap:7px;margin-top:5px}
+.cmpv{font-size:17px;font-weight:600;color:var(--a2)}
+.bdg{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
+.up{background:#d1fae5;color:#065f46}.dn{background:#fee2e2;color:#991b1b}.eq{background:#f3f4f6;color:var(--muted)}
+.hw{position:relative;margin-top:10px}
+.hw.h150{height:150px}.hw.h180{height:180px}.hw.h200{height:200px}.hw.h220{height:220px}
+
+/* BAR ROW */
+.blist{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.brow{display:flex;align-items:center;gap:8px}
+.blbl{font-size:12px;color:var(--muted);width:115px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bbg{flex:1;height:6px;background:var(--s2);border-radius:99px;overflow:hidden}
+.bfill{height:100%;border-radius:99px;transition:width .5s ease}
+.bval{font-family:'JetBrains Mono',monospace;font-size:11px;width:50px;text-align:right;color:var(--muted);flex-shrink:0}
+
+/* DONUT */
+.drow{display:flex;align-items:center;gap:16px;margin-top:10px}
+.dcw{width:90px;height:90px;flex-shrink:0}
+.leg{display:flex;flex-direction:column;gap:6px}
+.li{display:flex;align-items:center;gap:7px;font-size:12px}
+.ld{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* HEATMAP */
+.scol{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:10px}
+.swrap{position:relative}
+.swrap canvas{display:block;border-radius:7px}
+.sbadge{position:absolute;top:5px;left:8px;font-family:'JetBrains Mono',monospace;
+  font-size:8px;color:rgba(255,255,255,.6);text-transform:uppercase;pointer-events:none}
+.scount{position:absolute;bottom:5px;right:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,.6)}
+.sconn{width:2px;height:6px;background:var(--border);border-radius:99px}
+.hmap-tabs{display:flex;gap:6px;margin-bottom:10px}
+.htab{padding:3px 10px;border-radius:5px;border:1px solid var(--b2);background:transparent;
+  color:var(--muted);font-size:11px;cursor:pointer;transition:all .14s;font-family:'Inter',sans-serif}
+.htab.on{background:var(--a1);border-color:var(--a1);color:#fff}
+.htab.on.r{background:var(--a2);border-color:var(--a2)}
+.htab.on.m{background:var(--a6);border-color:var(--a6)}
+
+/* DRAG */
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.dcell{background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:9px}
+.dcell .dv{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--a4)}
+.dcell .dl{font-size:11px;color:var(--muted);margin-top:2px}
+.dlog{margin-top:9px;display:flex;flex-direction:column;gap:4px;max-height:150px;overflow-y:auto}
+.ditem{display:flex;gap:7px;padding:4px 7px;background:var(--s2);border:1px solid var(--border);
+  border-radius:5px;font-size:11px;align-items:center}
+.ditem .dd{font-family:'JetBrains Mono',monospace;color:var(--a4);width:45px;flex-shrink:0}
+.ditem .dk{font-family:'JetBrains Mono',monospace;color:var(--a3);width:45px;flex-shrink:0}
+.ditem .da{color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dlog::-webkit-scrollbar{width:3px}.dlog::-webkit-scrollbar-thumb{background:var(--b2);border-radius:99px}
+
+/* TABLE */
+.dtable{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.dtable th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.09em;
+  color:var(--muted);text-transform:uppercase;padding:4px 8px;text-align:left;border-bottom:1px solid var(--border)}
+.dtable td{padding:6px 8px;border-bottom:1px solid rgba(229,231,235,.5)}
+.dtable tr:last-child td{border:none}
+.dtable tr:hover td{background:#fafafa}
+.mb{height:4px;background:var(--s2);border-radius:99px;overflow:hidden}
+.mf{height:100%;border-radius:99px}
+
+/* KEYBOARD */
+.kchip{display:inline-flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+  background:var(--s2);border:1px solid var(--b2);border-bottom:2px solid var(--b2);
+  border-radius:5px;padding:2px 7px;min-width:26px;color:var(--text)}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:5px;margin-top:10px}
+.kitem{display:flex;align-items:center;gap:7px;padding:5px 8px;
+  background:var(--s2);border:1px solid var(--border);border-radius:6px}
+.kk{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+  min-width:55px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kn{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-left:auto;flex-shrink:0}
+.wpm-big{font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:700;color:var(--a1);line-height:1;margin-top:6px}
+.sclist{display:flex;flex-direction:column;gap:0;margin-top:8px}
+.scitem{display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.scitem:last-child{border:none}
+.scname{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--a1)}
+.scn{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+
+/* RECORDS TAB */
+.rec-hero{background:linear-gradient(135deg,var(--a1) 0%,var(--a5) 100%);
+  border-radius:14px;padding:28px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden}
+.rec-hero::before{content:'🏆';position:absolute;right:20px;top:10px;font-size:64px;opacity:.15}
+.rec-hero h2{font-size:22px;font-weight:700;margin-bottom:6px}
+.rec-hero p{opacity:.8;font-size:13px}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:18px}
+.rec-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:16px;box-shadow:var(--sh)}
+.rec-card h3{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.08em;font-family:'JetBrains Mono',monospace;margin-bottom:12px}
+.rec-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.rec-item:last-child{border:none}
+.rec-icon{font-size:18px;width:28px;text-align:center;flex-shrink:0}
+.rec-label{font-size:12px;color:var(--muted);flex:1}
+.rec-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text);text-align:right}
+.rec-date{font-size:10px;color:var(--muted);display:block;text-align:right}
+.dist-cmp{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.dist-ref{display:flex;align-items:center;gap:8px;padding:5px 8px;
+  background:var(--s2);border:1px solid var(--border);border-radius:6px;font-size:12px}
+.dist-ref .dr-icon{font-size:16px;width:22px;text-align:center}
+.dist-ref .dr-name{flex:1;color:var(--muted)}
+.dist-ref .dr-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+.dist-ref .dr-val.done{color:var(--a3)}.dist-ref .dr-val.todo{color:var(--b2)}
+.progress-bar{height:4px;background:var(--s3);border-radius:99px;overflow:hidden;margin-top:3px}
+.progress-fill{height:100%;border-radius:99px;background:var(--a3);transition:width .6s ease}
+.medal{display:inline-block;font-size:18px}
+.streak-bar{display:flex;gap:3px;margin-top:8px;flex-wrap:wrap}
+.streak-day{width:14px;height:14px;border-radius:3px;background:var(--s3)}
+.streak-day.active{background:var(--a3)}
+.streak-day.today{background:var(--a1)}
+.wday-table{width:100%;font-size:12px;margin-top:8px}
+.wday-table td{padding:4px 6px}
+.wday-table td:first-child{color:var(--muted);font-size:11px}
+.wday-table td:last-child{font-family:'JetBrains Mono',monospace;font-weight:600;text-align:right}
+
+/* OFFLINE */
+.offline{display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+  background:#fff;border:1px solid #fca5a5;border-radius:8px;padding:8px 16px;
+  font-size:12px;color:#ef4444;box-shadow:var(--sh2);z-index:999}
+.offline.show{display:block}
+
+@media(max-width:1100px){.s2,.s3,.s4{grid-column:span 6}.s5,.s7,.s8{grid-column:span 12}}
+@media(max-width:700px){.s2,.s3,.s4,.s5,.s6,.s7,.s8{grid-column:span 12}}
+code{background:var(--s2);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--a1)}
+.sec{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.08em;margin:16px 0 10px}
+</style>
+</head>
+<body>
+<div class="nav">
+  <div class="brand">⬡ Tracker</div>
+  <div class="tabs">
+    <div class="tab active" id="tab-mouse"    onclick="sw('mouse')">🖱️ Souris</div>
+    <div class="tab"        id="tab-keyboard" onclick="sw('keyboard')">⌨️ Clavier</div>
+    <div class="tab"        id="tab-analyse"  onclick="sw('analyse')">📈 Analyse</div>
+    <div class="tab"        id="tab-apps"     onclick="sw('apps')">🪟 Apps</div>
+    <div class="tab"        id="tab-records"  onclick="sw('records')">🏆 Records</div>
+  </div>
+  <div class="nav-right">
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="sdot" id="sdot"></div>
+      <span class="stxt" id="stxt">—</span>
+    </div>
+    <span class="syncl" id="synct">—</span>
+    <div class="rbar"><div class="rbar-f" id="rbar" style="width:100%"></div></div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ════════════════════════════════════════════════════════
+     ONGLET SOURIS
+════════════════════════════════════════════════════════ -->
+<div class="panel active" id="panel-mouse">
+  <div class="pbar" id="mp">
+    <span class="plbl">Période</span>
+    <div class="pbtns" id="mpb">
+      <button class="pb on" data-p="today">Aujourd'hui</button>
+      <button class="pb" data-p="yesterday">Hier</button>
+      <button class="pb" data-p="7d">7 jours</button>
+      <button class="pb" data-p="30d">30 jours</button>
+      <button class="pb" data-p="week">Semaine</button>
+      <button class="pb" data-p="month">Mois</button>
+      <button class="pb" data-p="year">Année</button>
+      <button class="pb" data-p="12m">12 mois</button>
+      <button class="pb" data-p="all">Tout</button>
+    </div>
+    <div class="psep"></div>
+    <button class="pb" id="mc-btn">📅 Libre</button>
+    <div class="psep"></div>
+    <button class="pb cmp" id="mc-cmp">⚡ Comparer</button>
+    <div class="ptag" id="mc-tag">Aujourd'hui</div>
+  </div>
+  <div class="cbar" id="mc-cbar">
+    <span class="plbl">Du</span><input type="date" class="din" id="mc-f">
+    <span class="plbl">au</span><input type="date" class="din" id="mc-t">
+    <button class="abtn" id="mc-apply">OK</button>
+  </div>
+  <div class="cmpb" id="mc-cmpb">
+    <span>Comparaison — <strong id="mc-cmpl">sélectionne une période</strong></span>
+    <button class="cmpx" id="mc-cmpx">✕</button>
+  </div>
+  <div class="g" id="m-dash">
+    <div class="s12" style="text-align:center;padding:70px 0;color:var(--muted)">
+      <div style="font-size:26px;margin-bottom:10px">⏳</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px">Connexion...</div>
+      <div style="margin-top:8px;font-size:12px">Lance <code>py tracker.py</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     ONGLET CLAVIER
+════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-keyboard">
+  <div class="pbar" id="kp">
+    <span class="plbl">Période</span>
+    <div class="pbtns" id="kpb">
+      <button class="pb on" data-p="today">Aujourd'hui</button>
+      <button class="pb" data-p="yesterday">Hier</button>
+      <button class="pb" data-p="7d">7 jours</button>
+      <button class="pb" data-p="30d">30 jours</button>
+      <button class="pb" data-p="week">Semaine</button>
+      <button class="pb" data-p="month">Mois</button>
+      <button class="pb" data-p="year">Année</button>
+      <button class="pb" data-p="12m">12 mois</button>
+      <button class="pb" data-p="all">Tout</button>
+    </div>
+    <div class="psep"></div>
+    <button class="pb" id="kc-btn">📅 Libre</button>
+    <div class="psep"></div>
+    <button class="pb cmp" id="kc-cmp">⚡ Comparer</button>
+    <div class="ptag" id="kc-tag">Aujourd'hui</div>
+  </div>
+  <div class="cbar" id="kc-cbar">
+    <span class="plbl">Du</span><input type="date" class="din" id="kc-f">
+    <span class="plbl">au</span><input type="date" class="din" id="kc-t">
+    <button class="abtn" id="kc-apply">OK</button>
+  </div>
+  <div class="cmpb" id="kc-cmpb">
+    <span>Comparaison — <strong id="kc-cmpl">sélectionne une période</strong></span>
+    <button class="cmpx" id="kc-cmpx">✕</button>
+  </div>
+  <div class="g" id="k-dash">
+    <div class="s12" style="text-align:center;padding:70px 0;color:var(--muted)">
+      <div style="font-size:26px;margin-bottom:10px">⏳</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px">Connexion...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     ONGLET RECORDS
+════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-records">
+  <div class="pbar" id="rp">
+    <span class="plbl">Période</span>
+    <div class="pbtns" id="rpb">
+      <button class="pb" data-p="today">Aujourd'hui</button>
+      <button class="pb" data-p="yesterday">Hier</button>
+      <button class="pb" data-p="7d">7 jours</button>
+      <button class="pb" data-p="30d">30 jours</button>
+      <button class="pb" data-p="week">Semaine</button>
+      <button class="pb" data-p="month">Mois</button>
+      <button class="pb" data-p="year">Année</button>
+      <button class="pb" data-p="12m">12 mois</button>
+      <button class="pb on" data-p="all">Tout</button>
+    </div>
+    <div class="psep"></div>
+    <button class="pb" id="rc-btn">📅 Libre</button>
+    <div class="ptag" id="rc-tag">Tout</div>
+  </div>
+  <div class="cbar" id="rc-cbar">
+    <span class="plbl">Du</span><input type="date" class="din" id="rc-f">
+    <span class="plbl">au</span><input type="date" class="din" id="rc-t">
+    <button class="abtn" id="rc-apply">OK</button>
+  </div>
+  <div id="r-dash">
+    <div style="text-align:center;padding:70px 0;color:var(--muted)">
+      <div style="font-size:26px;margin-bottom:10px">⏳</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px">Chargement...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     ONGLET ANALYSE
+════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-analyse">
+  <div class="pbar" id="ap">
+    <span class="plbl">Période</span>
+    <div class="pbtns" id="apb">
+      <button class="pb" data-p="today">Aujourd'hui</button>
+      <button class="pb" data-p="yesterday">Hier</button>
+      <button class="pb" data-p="7d">7 jours</button>
+      <button class="pb" data-p="30d">30 jours</button>
+      <button class="pb" data-p="week">Semaine</button>
+      <button class="pb" data-p="month">Mois</button>
+      <button class="pb" data-p="year">Année</button>
+      <button class="pb on" data-p="all">Tout</button>
+    </div>
+    <div class="psep"></div>
+    <button class="pb" id="an-btn">📅 Libre</button>
+    <div class="ptag" id="an-tag">Tout</div>
+  </div>
+  <div class="cbar" id="an-cbar">
+    <span class="plbl">Du</span><input type="date" class="din" id="an-f">
+    <span class="plbl">au</span><input type="date" class="din" id="an-t">
+    <button class="abtn" id="an-apply">OK</button>
+  </div>
+  <div id="a-dash"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     ONGLET APPS
+════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-apps">
+  <div class="pbar" id="pp">
+    <span class="plbl">Période</span>
+    <div class="pbtns" id="ppb">
+      <button class="pb" data-p="today">Aujourd'hui</button>
+      <button class="pb" data-p="yesterday">Hier</button>
+      <button class="pb" data-p="7d">7 jours</button>
+      <button class="pb" data-p="30d">30 jours</button>
+      <button class="pb" data-p="week">Semaine</button>
+      <button class="pb" data-p="month">Mois</button>
+      <button class="pb on" data-p="all">Tout</button>
+    </div>
+  </div>
+  <div id="p-dash"></div>
+</div>
+
+</div><!-- /content -->
+<div class="offline" id="offline">⚠️ Tracker hors ligne</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+Chart.defaults.font.family='Inter';
+Chart.defaults.color='#6b7280';
+
+// Stopwords globaux FR+EN (utilisés dans plusieurs renderers)
+const STOPWORDS_JS=new Set(["le","la","les","l","un","une","des","du","de","d","au","aux",
+  "je","tu","il","elle","on","nous","vous","ils","elles","me","te","se","lui","leur","y","en",
+  "ce","ci","mon","ton","son","ma","ta","sa","mes","tes","ses","nos","vos","leurs","moi","toi",
+  "et","ou","ni","mais","donc","or","car","si","que","qui","quoi","dont","par","pour","sur",
+  "sous","dans","avec","sans","entre","vers","comme","plus","moins","très","bien","aussi",
+  "encore","déjà","toujours","jamais","même","tout","tous","toute","ça","cela","est","été",
+  "avoir","faire","dit","fait","pas","non","oui","ne","peu","the","a","an","in","on","at",
+  "to","for","of","with","by","from","as","and","or","but","so","is","are","was","were",
+  "be","been","have","has","had","do","does","did","will","would","could","should","can",
+  "not","just","also","too","very","really","here","there","this","that","it","its"]);
+
+// ═══════════════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════════════
+function sw(t) {
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.getElementById('panel-'+t).classList.add('active');
+  if(t==='records') renderRecords();
+  if(t==='analyse') renderAnalyse();
+  if(t==='apps')    renderApps();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FETCH
+// ═══════════════════════════════════════════════════════════════════
+const REFRESH=30; let secsLeft=REFRESH, tick=null;
+let MRAW=null, KRAW=null, SRAW=null;
+
+async function fetchAll(){
+  try{
+    const [mr,kr,sr]=await Promise.all([
+      fetch('http://localhost:5000/mouse',{cache:'no-store'}),
+      fetch('http://localhost:5000/keyboard',{cache:'no-store'}),
+      fetch('http://localhost:5000/status',{cache:'no-store'})
+    ]);
+    if(!mr.ok||!kr.ok) throw 0;
+    MRAW=await mr.json(); KRAW=await kr.json();
+    SRAW=sr.ok?await sr.json():null;
+    setStatus('live');
+    document.getElementById('offline').classList.remove('show');
+    const ls=MRAW.current_session?.last_save;
+    if(ls) document.getElementById('synct').textContent=new Date(ls).toLocaleTimeString('fr-FR');
+    // Indicateur app active
+    if(SRAW?.current_app){
+      const app=SRAW.current_app;
+      document.getElementById('stxt').textContent='En direct · '+app;
+    }
+  }catch{
+    setStatus('err');
+    document.getElementById('offline').classList.add('show');
+  }
+  renderMouse(); renderKeyboard();
+  if(document.getElementById('panel-records').classList.contains('active')) renderRecords();
+  if(document.getElementById('panel-analyse').classList.contains('active')) renderAnalyse();
+  if(document.getElementById('panel-apps').classList.contains('active'))    renderApps();
+}
+function setStatus(s){
+  document.getElementById('sdot').className='sdot '+s;
+  document.getElementById('stxt').textContent=s==='live'?'En direct':'Hors ligne';
+}
+function updBar(){ document.getElementById('rbar').style.width=(secsLeft/REFRESH*100)+'%'; }
+function startTick(){
+  clearInterval(tick); secsLeft=REFRESH; updBar();
+  tick=setInterval(()=>{secsLeft--;updBar();if(secsLeft<=0){secsLeft=REFRESH;fetchAll();}},1000);
+}
+fetchAll().then(()=>startTick());
+
+// ═══════════════════════════════════════════════════════════════════
+// DATE UTILS
+// ═══════════════════════════════════════════════════════════════════
+function lstr(d){return d.getFullYear()+'-'+S2(d.getMonth()+1)+'-'+S2(d.getDate());}
+function S2(n){return String(n).padStart(2,'0');}
+function drange(p,f,t){
+  const T=new Date();T.setHours(0,0,0,0);const fmt=d=>lstr(d);
+  if(p==='today')    return [fmt(T),fmt(T)];
+  if(p==='yesterday'){const y=new Date(T);y.setDate(y.getDate()-1);return [fmt(y),fmt(y)];}
+  if(p==='7d')       {const s=new Date(T);s.setDate(s.getDate()-6);return [fmt(s),fmt(T)];}
+  if(p==='30d')      {const s=new Date(T);s.setDate(s.getDate()-29);return [fmt(s),fmt(T)];}
+  if(p==='week')     {const s=new Date(T);s.setDate(s.getDate()-((s.getDay()||7)-1));return [fmt(s),fmt(T)];}
+  if(p==='month')    {return [fmt(new Date(T.getFullYear(),T.getMonth(),1)),fmt(T)];}
+  if(p==='year')     {return [T.getFullYear()+'-01-01',fmt(T)];}
+  if(p==='12m')      {const s=new Date(T);s.setFullYear(s.getFullYear()-1);s.setDate(s.getDate()+1);return [fmt(s),fmt(T)];}
+  if(p==='all')      return [null,null];
+  if(p==='custom')   return [f,t];
+  return [null,null];
+}
+function plbl(p,f,t){
+  const m={today:"Aujourd'hui",yesterday:'Hier','7d':'7 jours','30d':'30 jours',
+    week:'Semaine',month:'Mois',year:'Année','12m':'12 mois',all:'Tout'};
+  if(p==='custom'&&f&&t) return f===t?f:f+' → '+t;
+  return m[p]||p;
+}
+function fdays(daily,f,t){
+  const e=Object.entries(daily||{});
+  if(!f&&!t) return e;
+  return e.filter(([d])=>(!f||d>=f)&&(!t||d<=t));
+}
+function N(n){return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'k':(n||0).toString();}
+function fdist(px){const m=px*.000264583;return m>=1000?{v:(m/1000).toFixed(2),u:'km'}:{v:m.toFixed(1),u:'m'};}
+function dlbl(s){const[y,mo,da]=s.split('-').map(Number);return new Date(y,mo-1,da).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});}
+function dH(a,b){
+  if(b===null||b===undefined) return '';
+  const d=a-b,p=b>0?Math.round(d/b*100):0,s=d>0?'+':'';
+  return '<span class="bdg '+(d>0?'up':d<0?'dn':'eq')+'">'+s+p+'%</span>';
+}
+const CO={plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#e5e7eb',
+  borderWidth:1,titleColor:'#111827',bodyColor:'#6b7280',padding:10,cornerRadius:7}}};
+
+// ═══════════════════════════════════════════════════════════════════
+// PERIOD STATE — MOUSE
+// ═══════════════════════════════════════════════════════════════════
+const MS={p:'today',cp:null,cm:false,f:null,t:null};
+let mC={};
+
+function mPeriodInit(){
+  document.getElementById('mpb').addEventListener('click',e=>{
+    const b=e.target.closest('.pb');if(!b)return;
+    const p=b.dataset.p;
+    if(MS.cm){MS.cp=p;MS.cm=false;showCmpB('mc',p);renderMouse();return;}
+    MS.p=p;
+    document.querySelectorAll('#mpb .pb').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('mc-tag').textContent=plbl(p);
+    document.getElementById('mc-cbar').classList.remove('show');
+    renderMouse();
+  });
+  document.getElementById('mc-btn').addEventListener('click',()=>{
+    const c=document.getElementById('mc-cbar');c.classList.toggle('show');
+    if(c.classList.contains('show')){const[f,t]=drange('7d');document.getElementById('mc-f').value=MS.f||f;document.getElementById('mc-t').value=MS.t||t;}
+  });
+  document.getElementById('mc-apply').addEventListener('click',()=>{
+    MS.f=document.getElementById('mc-f').value;MS.t=document.getElementById('mc-t').value;
+    if(!MS.f||!MS.t)return;MS.p='custom';
+    document.querySelectorAll('#mpb .pb').forEach(x=>x.classList.remove('on'));
+    document.getElementById('mc-btn').classList.add('on');
+    document.getElementById('mc-tag').textContent=plbl('custom',MS.f,MS.t);
+    renderMouse();
+  });
+  document.getElementById('mc-cmp').addEventListener('click',()=>{
+    if(MS.cp){MS.cp=null;document.getElementById('mc-cmpb').classList.remove('show');renderMouse();return;}
+    MS.cm=true;document.getElementById('mc-cmpb').classList.add('show');
+    document.getElementById('mc-cmpl').textContent='Sélectionne une 2ème période';
+  });
+  document.getElementById('mc-cmpx').addEventListener('click',()=>{
+    MS.cp=null;MS.cm=false;document.getElementById('mc-cmpb').classList.remove('show');renderMouse();
+  });
+}
+function showCmpB(ns,p){
+  document.getElementById(ns+'-cmpb').classList.add('show');
+  document.getElementById(ns+'-cmpl').textContent=plbl(p);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PERIOD STATE — KEYBOARD
+// ═══════════════════════════════════════════════════════════════════
+const KS={p:'today',cp:null,cm:false,f:null,t:null};
+let kC={};
+
+function kPeriodInit(){
+  document.getElementById('kpb').addEventListener('click',e=>{
+    const b=e.target.closest('.pb');if(!b)return;
+    const p=b.dataset.p;
+    if(KS.cm){KS.cp=p;KS.cm=false;showCmpB('kc',p);renderKeyboard();return;}
+    KS.p=p;
+    document.querySelectorAll('#kpb .pb').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('kc-tag').textContent=plbl(p);
+    document.getElementById('kc-cbar').classList.remove('show');
+    renderKeyboard();
+  });
+  document.getElementById('kc-btn').addEventListener('click',()=>{
+    const c=document.getElementById('kc-cbar');c.classList.toggle('show');
+    if(c.classList.contains('show')){const[f,t]=drange('7d');document.getElementById('kc-f').value=KS.f||f;document.getElementById('kc-t').value=KS.t||t;}
+  });
+  document.getElementById('kc-apply').addEventListener('click',()=>{
+    KS.f=document.getElementById('kc-f').value;KS.t=document.getElementById('kc-t').value;
+    if(!KS.f||!KS.t)return;KS.p='custom';
+    document.querySelectorAll('#kpb .pb').forEach(x=>x.classList.remove('on'));
+    document.getElementById('kc-btn').classList.add('on');
+    document.getElementById('kc-tag').textContent=plbl('custom',KS.f,KS.t);
+    renderKeyboard();
+  });
+  document.getElementById('kc-cmp').addEventListener('click',()=>{
+    if(KS.cp){KS.cp=null;document.getElementById('kc-cmpb').classList.remove('show');renderKeyboard();return;}
+    KS.cm=true;document.getElementById('kc-cmpb').classList.add('show');
+    document.getElementById('kc-cmpl').textContent='Sélectionne une 2ème période';
+  });
+  document.getElementById('kc-cmpx').addEventListener('click',()=>{
+    KS.cp=null;KS.cm=false;document.getElementById('kc-cmpb').classList.remove('show');renderKeyboard();
+  });
+}
+// ═══════════════════════════════════════════════════════════════════
+// ANALYSE — init période
+// ═══════════════════════════════════════════════════════════════════
+const AN={p:'all',f:null,t:null};
+let anC={};
+
+function anPeriodInit(){
+  document.getElementById('apb').addEventListener('click',e=>{
+    const b=e.target.closest('.pb');if(!b)return;
+    AN.p=b.dataset.p;
+    document.querySelectorAll('#apb .pb').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('an-tag').textContent=plbl(AN.p);
+    document.getElementById('an-cbar').classList.remove('show');
+    if(document.getElementById('panel-analyse').classList.contains('active')) renderAnalyse();
+  });
+  document.getElementById('an-btn').addEventListener('click',()=>{
+    const c=document.getElementById('an-cbar');c.classList.toggle('show');
+    if(c.classList.contains('show')){const[f,t]=drange('7d');document.getElementById('an-f').value=AN.f||f;document.getElementById('an-t').value=AN.t||t;}
+  });
+  document.getElementById('an-apply').addEventListener('click',()=>{
+    AN.f=document.getElementById('an-f').value;AN.t=document.getElementById('an-t').value;
+    if(!AN.f||!AN.t)return;AN.p='custom';
+    document.querySelectorAll('#apb .pb').forEach(x=>x.classList.remove('on'));
+    document.getElementById('an-btn').classList.add('on');
+    document.getElementById('an-tag').textContent=plbl('custom',AN.f,AN.t);
+    if(document.getElementById('panel-analyse').classList.contains('active')) renderAnalyse();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ANALYSE — render
+// ═══════════════════════════════════════════════════════════════════
+function renderAnalyse(){
+  const el=document.getElementById('a-dash');
+  if(!MRAW||!KRAW){el.innerHTML='<div style="text-align:center;padding:60px 0;color:var(--muted)">Données non disponibles</div>';return;}
+  const [f1,t1]=drange(AN.p,AN.f,AN.t);
+  const mdays=fdays(MRAW.daily_stats||{},f1,t1);
+  const kdays=fdays(KRAW.daily_stats||{},f1,t1);
+  Object.values(anC).forEach(c=>{try{c.destroy();}catch{}});anC={};
+
+  // ── Score productivité ──────────────────────────────────────────
+  // Score = clics/jour + frappes/100 + mots*2, normalisé sur le max historique
+  const allMdays=Object.entries(MRAW.daily_stats||{});
+  const allKdays=Object.entries(KRAW.daily_stats||{});
+  function dayScore(md,kd){
+    const cl=md?.total_clicks||0, ks=kd?.keystrokes||0, wt=kd?.words_typed||0;
+    const pauseRatio=1-Math.min(0.5,(md?.pause_total_s||0)/28800); // pénalité pauses
+    return Math.round((cl + ks/10 + wt*2)*pauseRatio);
+  }
+  const allDates=[...new Set([...allMdays.map(([d])=>d),...allKdays.map(([d])=>d)])].sort();
+  const scoreByDate=allDates.map(d=>{
+    const md=MRAW.daily_stats[d], kd=KRAW.daily_stats[d];
+    return{d,s:dayScore(md,kd)};
+  });
+  const maxScore=Math.max(...scoreByDate.map(x=>x.s),1);
+  // Scores sur la période filtrée
+  const periodDates=[...new Set([...mdays.map(([d])=>d),...kdays.map(([d])=>d)])].sort();
+  const periodScores=periodDates.map(d=>{
+    const md=MRAW.daily_stats[d],kd=KRAW.daily_stats[d];
+    return{d,s:dayScore(md,kd),pct:Math.round(dayScore(md,kd)/maxScore*100)};
+  });
+  const avgScore=periodScores.length?Math.round(periodScores.reduce((a,x)=>a+x.s,0)/periodScores.length):0;
+  const todayScore=periodScores.find(x=>x.d===lstr(new Date()))?.pct||0;
+
+  // ── Corrélation souris/clavier par heure ───────────────────────
+  const mHour=Array(24).fill(0), kHour=Array(24).fill(0);
+  for(const[,d]of mdays) for(const[h,n]of Object.entries(d.hours||{})) mHour[+h]+=n;
+  for(const[,d]of kdays) for(const[h,n]of Object.entries(d.hours||{})) kHour[+h]+=n;
+
+  // ── Pauses ─────────────────────────────────────────────────────
+  const allPauses=[];
+  for(const[d,v]of mdays) for(const p of(v.pauses||[])) allPauses.push({...p,day:d});
+  const totalPauseS=mdays.reduce((a,[,v])=>a+(v.pause_total_s||0),0);
+  const avgPausePerDay=mdays.length?Math.round(totalPauseS/mdays.length):0;
+  // Distribution des pauses par heure
+  const pauseByHour=Array(24).fill(0);
+  for(const p of allPauses){
+    const h=new Date(p.start).getHours();
+    pauseByHour[h]=(pauseByHour[h]||0)+1;
+  }
+
+  // ── Carte calendrier (type GitHub) ─────────────────────────────
+  function calHeatmap(){
+    const weeks=[], today=new Date();
+    // 52 semaines en arrière
+    const start=new Date(today); start.setDate(start.getDate()-(52*7));
+    start.setDate(start.getDate()-start.getDay()); // aligner sur dimanche
+    let d=new Date(start);
+    while(d<=today){
+      const week=[];
+      for(let i=0;i<7;i++){
+        const ds=lstr(d);
+        const md=MRAW.daily_stats[ds], kd=KRAW.daily_stats[ds];
+        const s=md||kd?dayScore(md,kd):null;
+        week.push({d:ds,s});
+        d.setDate(d.getDate()+1);
+      }
+      weeks.push(week);
+    }
+    // Générer le SVG
+    const cw=12,ch=12,gap=2,lh=18;
+    const W=(cw+gap)*weeks.length+40, H=(ch+gap)*7+lh+20;
+    const months=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    const days=['D','L','M','M','J','V','S'];
+    let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter">`;
+    // Labels jours
+    [1,3,5].forEach(i=>{svg+=`<text x="0" y="${lh+(ch+gap)*i+ch*.75}" font-size="9" fill="#9ca3af">${days[i]}</text>`;});
+    // Mois labels
+    let lastM=-1;
+    weeks.forEach((wk,wi)=>{
+      const m=new Date(wk[0].d).getMonth();
+      if(m!==lastM){svg+=`<text x="${wi*(cw+gap)+30}" y="11" font-size="9" fill="#6b7280">${months[m]}</text>`;lastM=m;}
+      wk.forEach((cell,di)=>{
+        const x=wi*(cw+gap)+30, y=lh+di*(ch+gap);
+        let fill='#f3f4f6';
+        if(cell.s!==null){
+          const t=cell.s/maxScore;
+          const r=Math.round(79+t*(49-79)),g=Math.round(70+t*(130-70)),b=Math.round(229+t*(100-229));
+          fill=`rgb(${r},${g},${b})`;
+        }
+        svg+=`<rect x="${x}" y="${y}" width="${cw}" height="${ch}" rx="2" fill="${fill}"><title>${cell.d}: score ${cell.s??'—'}</title></rect>`;
+      });
+    });
+    svg+='</svg>';
+    return svg;
+  }
+
+  // ── Comparaison toi vs toi ─────────────────────────────────────
+  function tvsT(){
+    // Compare la période sélectionnée avec la période précédente de même durée
+    if(!f1||!t1) return{label:'',items:[]};
+    const d1=new Date(f1),d2=new Date(t1);
+    const dur=Math.round((d2-d1)/86400000)+1;
+    const pf=new Date(d1); pf.setDate(pf.getDate()-dur);
+    const pt=new Date(d1); pt.setDate(pt.getDate()-1);
+    const [pfS,ptS]=[lstr(pf),lstr(pt)];
+    const cur=aggM(MRAW.daily_stats||{},f1,t1), prev=aggM(MRAW.daily_stats||{},pfS,ptS);
+    const curK=aggK(KRAW.daily_stats||{},f1,t1), prevK=aggK(KRAW.daily_stats||{},pfS,ptS);
+    const diff=(a,b)=>b>0?Math.round((a-b)/b*100):null;
+    return{
+      label:`vs ${pfS} → ${ptS}`,
+      items:[
+        {icon:'🖱️',label:'Clics/jour',cur:Math.round(cur.total_clicks/(cur.days||1)),prev:Math.round(prev.total_clicks/(prev.days||1))},
+        {icon:'⌨️',label:'Frappes/jour',cur:Math.round(curK.keystrokes/(curK.days||1)),prev:Math.round(prevK.keystrokes/(prevK.days||1))},
+        {icon:'📝',label:'Mots/jour',cur:Math.round(curK.words_typed/(curK.days||1)),prev:Math.round(prevK.words_typed/(prevK.days||1))},
+        {icon:'📏',label:'Distance/jour',cur:Math.round(cur.distance_px/(cur.days||1)*.000264583),prev:Math.round(prev.distance_px/(prev.days||1)*.000264583),unit:'m'},
+      ]
+    };
+  }
+  const tvst=tvsT();
+
+  // ── Anomalies ─────────────────────────────────────────────────
+  function detectAnomalies(){
+    if(allDates.length<7) return[];
+    const anomalies=[];
+    // Pour chaque métrique, calculer moyenne et écart-type sur tout l'historique
+    const metrics=[
+      {key:'total_clicks',src:'m',label:'clics',icon:'🖱️'},
+      {key:'keystrokes',src:'k',label:'frappes',icon:'⌨️'},
+      {key:'deletes',src:'k',label:'corrections',icon:'⌫'},
+    ];
+    for(const m of metrics){
+      const vals=allDates.map(d=>{
+        const v=m.src==='m'?MRAW.daily_stats[d]:KRAW.daily_stats[d];
+        return v?v[m.key]||0:0;
+      }).filter(v=>v>0);
+      if(vals.length<5)continue;
+      const avg=vals.reduce((a,b)=>a+b)/vals.length;
+      const std=Math.sqrt(vals.reduce((a,v)=>a+(v-avg)**2,0)/vals.length);
+      // Chercher anomalies dans la période filtrée
+      for(const d of periodDates){
+        const v=m.src==='m'?MRAW.daily_stats[d]?.[m.key]||0:KRAW.daily_stats[d]?.[m.key]||0;
+        const z=(v-avg)/std;
+        if(Math.abs(z)>2){
+          anomalies.push({d,metric:m.label,icon:m.icon,v,avg:Math.round(avg),z:z.toFixed(1),high:z>0});
+        }
+      }
+    }
+    return anomalies.sort((a,b)=>Math.abs(+b.z)-Math.abs(+a.z)).slice(0,6);
+  }
+  const anomalies=detectAnomalies();
+
+  el.innerHTML=`
+    <div class="dash-grid">
+
+      <div class="card s6">
+        <div class="cl">📅 Carte d'activité — 52 semaines</div>
+        <div style="overflow-x:auto;padding:8px 0">${calHeatmap()}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;color:var(--muted)">
+          Moins actif
+          ${['#f3f4f6','#8b7fd4','#6366f1','#4f46e5','#3730a3'].map(c=>`<div style="width:10px;height:10px;border-radius:2px;background:${c}"></div>`).join('')}
+          Plus actif
+        </div>
+      </div>
+
+      <div class="card s3">
+        <div class="cl">⭐ Score productivité</div>
+        <div style="text-align:center;padding:12px 0">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:48px;font-weight:700;color:var(--a1);line-height:1">${todayScore}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">aujourd'hui / 100</div>
+        </div>
+        <div style="margin-top:8px">
+          <div class="brow"><span class="blbl">Aujourd'hui</span>
+            <div class="bbg"><div class="bfill" style="width:${todayScore}%;background:var(--a1)"></div></div>
+            <span class="bval">${todayScore}</span></div>
+          <div class="brow"><span class="blbl">Moy. période</span>
+            <div class="bbg"><div class="bfill" style="width:${Math.round(avgScore/maxScore*100)}%;background:#6366f1"></div></div>
+            <span class="bval">${Math.round(avgScore/maxScore*100)}</span></div>
+          <div class="brow"><span class="blbl">Record</span>
+            <div class="bbg"><div class="bfill" style="width:100%;background:#059669"></div></div>
+            <span class="bval">100</span></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">Clics + frappes/10 + mots×2<br>Pondéré par le temps actif</div>
+      </div>
+
+      <div class="card s3">
+        <div class="cl">⏸️ Pauses</div>
+        <div class="cv c4">${allPauses.length}</div>
+        <div class="csub">pauses sur la période</div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted)">Temps total en pause</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--a2)">
+          ${Math.floor(totalPauseS/3600)}h ${Math.floor((totalPauseS%3600)/60)}m
+        </div>
+        <div style="margin-top:6px;font-size:12px;color:var(--muted)">Moy. par jour actif : <b>${Math.floor(avgPausePerDay/60)}m${avgPausePerDay%60}s</b></div>
+      </div>
+
+      <div class="card s6">
+        <div class="cl">🔄 Corrélation souris / clavier par heure</div>
+        <div class="hw h200"><canvas id="an-corr"></canvas></div>
+      </div>
+
+      <div class="card s6">
+        <div class="cl">📊 Score productivité — évolution</div>
+        <div class="hw h180"><canvas id="an-score"></canvas></div>
+      </div>
+
+      <div class="card s3">
+        <div class="cl">🔁 Toi vs Toi <span style="font-size:10px;color:var(--muted)">${tvst.label}</span></div>
+        ${tvst.items.length?tvst.items.map(it=>{
+          const d=it.prev>0?Math.round((it.cur-it.prev)/it.prev*100):null;
+          const col=d===null?'var(--muted)':d>0?'#059669':d<0?'#dc2626':'var(--muted)';
+          const arr=d===null?'':'→ '+(d>0?'↑':'↓')+Math.abs(d)+'%';
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">'
+            +'<span style="font-size:12px">'+it.icon+' '+it.label+'</span>'
+            +'<div style="text-align:right">'
+            +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:13px;font-weight:600">'+N(it.cur)+(it.unit?' '+it.unit:'')+'</span>'
+            +'<span style="font-size:10px;color:'+col+';margin-left:6px">'+arr+'</span>'
+            +'</div></div>';
+        }).join(''):'<div style="color:var(--muted);font-size:12px;padding:16px 0;text-align:center">Sélectionne une période bornée pour activer</div>'}
+      </div>
+
+      <div class="card s3">
+        <div class="cl">⚠️ Anomalies détectées</div>
+        ${anomalies.length?anomalies.map(a=>`
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:16px">${a.icon}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:11px;font-weight:600;color:${a.high?'#059669':'#dc2626'}">${a.high?'▲ Pic':'▼ Creux'} ${a.label}</div>
+              <div style="font-size:10px;color:var(--muted)">${fullDate(a.d)}</div>
+              <div style="font-size:11px;font-family:'JetBrains Mono',monospace">${N(a.v)} <span style="color:var(--muted)">(moy. ${N(a.avg)}, z=${a.z})</span></div>
+            </div>
+          </div>`).join('')
+          :'<div style="color:var(--muted);font-size:12px;padding:24px 0;text-align:center">Aucune anomalie sur la période</div>'}
+      </div>
+
+    </div>
+  `;
+
+  // Corrélation dual-axis
+  const labels=Array.from({length:24},(_,i)=>i+'h');
+  anC.corr=new Chart(document.getElementById('an-corr'),{type:'bar',
+    data:{labels,datasets:[
+      {label:'Clics souris',data:mHour,backgroundColor:'#4f46e5aa',yAxisID:'y',borderRadius:2,borderSkipped:false},
+      {label:'Frappes clavier',data:kHour,backgroundColor:'#db2777aa',type:'line',yAxisID:'y2',
+        borderColor:'#db2777',fill:false,tension:.3,pointRadius:2,borderWidth:2},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{...CO.plugins,legend:{display:true,labels:{color:'#6b7280',font:{size:10},boxWidth:8}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#9ca3af',maxTicksLimit:12}},
+        y:{position:'left',grid:{color:'#f3f4f6'},ticks:{color:'#4f46e5'},title:{display:true,text:'Clics',color:'#4f46e5',font:{size:10}}},
+        y2:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#db2777'},title:{display:true,text:'Frappes',color:'#db2777',font:{size:10}}},
+      }}});
+
+  // Score productivité dans le temps
+  const sl=periodScores.slice(-60);
+  anC.score=new Chart(document.getElementById('an-score'),{type:'line',
+    data:{labels:sl.map(x=>dlbl(x.d)),datasets:[{
+      label:'Score',data:sl.map(x=>x.pct),
+      borderColor:'#4f46e5',backgroundColor:'rgba(79,70,229,.08)',fill:true,tension:.3,
+      pointRadius:sl.length>30?0:3,borderWidth:2,
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:CO.plugins,
+      scales:{x:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',maxTicksLimit:10,maxRotation:45}},
+              y:{min:0,max:100,grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',callback:v=>v+'%'}}}}});
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// APPS — init période + render
+// ═══════════════════════════════════════════════════════════════════
+const PP={p:'all'}; let ppC={};
+
+function appsPeriodInit(){
+  document.getElementById('ppb').addEventListener('click',e=>{
+    const b=e.target.closest('.pb');if(!b)return;
+    PP.p=b.dataset.p;
+    document.querySelectorAll('#ppb .pb').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    if(document.getElementById('panel-apps').classList.contains('active')) renderApps();
+  });
+}
+
+// Icônes par app
+const APP_ICONS={chrome:'🌐',firefox:'🦊',msedge:'🌀',edge:'🌀',brave:'🦁',safari:'🧭',
+  code:'💻',vscode:'💻',idea:'🧠',pycharm:'🐍',webstorm:'🔷',
+  excel:'📊',word:'📝',powerpoint:'📑',outlook:'📧',teams:'💬',slack:'💬',discord:'💬',
+  zoom:'📹',notion:'📓',obsidian:'🔮',figma:'🎨',photoshop:'🖼️',illustrator:'✏️',
+  terminal:'⬛',cmd:'⬛',powershell:'🔵',explorer:'📁',notepad:'🗒️',
+  spotify:'🎵',vlc:'📺',unknown:'❓'};
+function appIcon(name){
+  for(const[k,v]of Object.entries(APP_ICONS)) if(name.includes(k)) return v;
+  return '🖥️';
+}
+
+function renderApps(){
+  const el=document.getElementById('p-dash');
+  if(!MRAW||!KRAW){el.innerHTML='<div style="text-align:center;padding:60px 0;color:var(--muted)">Données non disponibles</div>';return;}
+  const [f1,t1]=drange(PP.p,null,null);
+  const mdays=fdays(MRAW.daily_stats||{},f1,t1);
+  const kdays=fdays(KRAW.daily_stats||{},f1,t1);
+  Object.values(ppC).forEach(c=>{try{c.destroy();}catch{}});ppC={};
+
+  // Agréger par app
+  const appClicks={}, appKeys={};
+  for(const[,d]of mdays) for(const[a,n]of Object.entries(d.apps||{})) appClicks[a]=(appClicks[a]||0)+n;
+  for(const[,d]of kdays) for(const[a,n]of Object.entries(d.apps||{})) appKeys[a]=(appKeys[a]||0)+n;
+
+  const allApps=[...new Set([...Object.keys(appClicks),...Object.keys(appKeys)])];
+  const appData=allApps.map(a=>({name:a,clicks:appClicks[a]||0,keys:appKeys[a]||0,total:(appClicks[a]||0)+(appKeys[a]||0)}))
+    .sort((a,b)=>b.total-a.total).slice(0,20);
+
+  const totalClicks=appData.reduce((s,a)=>s+a.clicks,0)||1;
+  const totalKeys  =appData.reduce((s,a)=>s+a.keys,0)||1;
+  const top5c=appData.slice(0,5), top5k=[...appData].sort((a,b)=>b.keys-a.keys).slice(0,5);
+
+  el.innerHTML=`
+    <div class="dash-grid">
+
+      <div class="card s4">
+        <div class="cl">🖱️ Top apps — Clics</div>
+        <div id="app-clist"></div>
+      </div>
+
+      <div class="card s4">
+        <div class="cl">⌨️ Top apps — Frappes</div>
+        <div id="app-klist"></div>
+      </div>
+
+      <div class="card s4">
+        <div class="cl">🥧 Répartition clics par app</div>
+        <div class="hw h220"><canvas id="app-cpie"></canvas></div>
+      </div>
+
+      <div class="card s8">
+        <div class="cl">📊 Activité par app — Clics + Frappes</div>
+        <div class="hw h240"><canvas id="app-bar"></canvas></div>
+      </div>
+
+    </div>
+  `;
+
+  // Listes
+  const maxC=appData[0]?.clicks||1, maxK=Math.max(...appData.map(a=>a.keys),1);
+  document.getElementById('app-clist').innerHTML=appData.slice(0,10).map((a,i)=>
+    '<div class="brow">'
+    +'<span class="blbl">'+appIcon(a.name)+' '+a.name+'</span>'
+    +'<div class="bbg"><div class="bfill" style="width:'+Math.round(a.clicks/maxC*100)+'%;background:#4f46e5"></div></div>'
+    +'<span class="bval">'+N(a.clicks)+'</span></div>'
+  ).join('');
+  document.getElementById('app-klist').innerHTML=[...appData].sort((a,b)=>b.keys-a.keys).slice(0,10).map((a,i)=>
+    '<div class="brow">'
+    +'<span class="blbl">'+appIcon(a.name)+' '+a.name+'</span>'
+    +'<div class="bbg"><div class="bfill" style="width:'+Math.round(a.keys/maxK*100)+'%;background:#db2777"></div></div>'
+    +'<span class="bval">'+N(a.keys)+'</span></div>'
+  ).join('');
+
+  // Donut clics
+  const p5=top5c, rest5c=totalClicks-top5c.reduce((s,a)=>s+a.clicks,0);
+  ppC.cpie=new Chart(document.getElementById('app-cpie'),{type:'doughnut',
+    data:{labels:[...p5.map(a=>a.name),'Autres'],
+          datasets:[{data:[...p5.map(a=>a.clicks),rest5c],
+            backgroundColor:['#4f46e5','#db2777','#059669','#d97706','#0891b2','#9ca3af'],borderWidth:0}]},
+    options:{cutout:'60%',responsive:true,maintainAspectRatio:false,
+      plugins:{...CO.plugins,legend:{display:true,position:'right',labels:{color:'#6b7280',font:{size:10},boxWidth:10}}}}});
+
+  // Barre groupée top 8
+  const top8=appData.slice(0,8);
+  ppC.bar=new Chart(document.getElementById('app-bar'),{type:'bar',
+    data:{labels:top8.map(a=>appIcon(a.name)+' '+a.name),
+      datasets:[
+        {label:'Clics',data:top8.map(a=>a.clicks),backgroundColor:'#4f46e5cc',borderRadius:3,borderSkipped:false},
+        {label:'Frappes',data:top8.map(a=>a.keys),  backgroundColor:'#db2777cc',borderRadius:3,borderSkipped:false},
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{...CO.plugins,legend:{display:true,labels:{color:'#6b7280',font:{size:10},boxWidth:8}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#6b7280',font:{size:10}}},
+              y:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af'}}}}});
+}
+
+mPeriodInit(); kPeriodInit(); recPeriodInit(); anPeriodInit(); appsPeriodInit();
+
+// ═══════════════════════════════════════════════════════════════════
+// AGGREGATE
+// ═══════════════════════════════════════════════════════════════════
+function aggM(daily,f,t){
+  const days=fdays(daily,f,t);
+  const a={left_clicks:0,right_clicks:0,middle_clicks:0,double_clicks:0,total_clicks:0,
+    drags:0,drag_distance_px:0,drag_duration_ms:0,scroll_up:0,scroll_down:0,scroll_dist_px:0,
+    hours:{},per_screen:{},days:days.length};
+  for(const[,d]of days){
+    for(const k of['left_clicks','right_clicks','middle_clicks','double_clicks','total_clicks',
+      'drags','drag_distance_px','drag_duration_ms','scroll_up','scroll_down','scroll_dist_px'])
+      a[k]+=(d[k]||0);
+    for(const[h,v]of Object.entries(d.hours||{})) a.hours[h]=(a.hours[h]||0)+v;
+    for(const[s,v]of Object.entries(d.per_screen||{})) a.per_screen[s]=(a.per_screen[s]||0)+v;
+  }
+  return a;
+}
+function aggK(daily,f,t){
+  const days=fdays(daily,f,t);
+  const a={keystrokes:0,letters:0,digits:0,spaces:0,deletes:0,enters:0,modifiers:0,
+    navigations:0,symbols:0,other:0,words_typed:0,shortcuts:{},hours:{},days:days.length};
+  for(const[,d]of days){
+    for(const k of['keystrokes','letters','digits','spaces','deletes','enters','modifiers',
+      'navigations','symbols','other','words_typed']) a[k]+=(d[k]||0);
+    for(const[h,v]of Object.entries(d.hours||{})) a.hours[h]=(a.hours[h]||0)+v;
+    for(const[sc,v]of Object.entries(d.shortcuts||{})) a.shortcuts[sc]=(a.shortcuts[sc]||0)+v;
+  }
+  return a;
+}
+function dseries(daily,f,t,field){
+  return fdays(daily,f,t).sort((a,b)=>a[0].localeCompare(b[0])).map(([d,v])=>({d,v:v[field]||0}));
+}
+function estDist(daily,f,t){
+  const tot=MRAW.total?.distance_px||0;
+  const totC=Object.values(daily||{}).reduce((s,d)=>s+(d.total_clicks||0),0)||1;
+  return Math.round(tot*(aggM(daily,f,t).total_clicks/totC));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER MOUSE
+// ═══════════════════════════════════════════════════════════════════
+let hmapMode='left'; // 'left' | 'right' | 'middle'
+
+function renderMouse(){
+  if(!MRAW) return;
+  const daily=MRAW.daily_stats||{},hps=MRAW.heatmap_per_screen||{},screens=MRAW.screen_info?.screens||[];
+  const [f1,t1]=drange(MS.p,MS.f,MS.t);
+  const a1=aggM(daily,f1,t1); const s1=dseries(daily,f1,t1,'total_clicks');
+  let a2=null,s2=null;
+  if(MS.cp){const[f2,t2]=drange(MS.cp);a2=aggM(daily,f2,t2);s2=dseries(daily,f2,t2,'total_clicks');}
+
+  const lc=a1.left_clicks,rc=a1.right_clicks,mc=a1.middle_clicks,dc=a1.double_clicks;
+  const tc=lc+rc+mc;
+  const totSC=Math.max(1,Object.values(a1.per_screen).reduce((s,v)=>s+v,0));
+  const distPx=MS.p==='all'?(MRAW.total?.distance_px||0):estDist(daily,f1,t1);
+  const scrollDistPx=MS.p==='all'?(MRAW.total?.scroll_dist_px||0):(a1.scroll_dist_px||0);
+  const scU=a1.scroll_up, scD=a1.scroll_down;
+  const dragCnt=a1.drags, dragDist=a1.drag_distance_px, dragDur=a1.drag_duration_ms;
+  const avgDD=dragCnt>0?dragDur/dragCnt:0, avgDDist=dragCnt>0?dragDist/dragCnt:0;
+  const drags=(MRAW.drags||[]).filter(d=>{const day=d.t?.split('T')[0];return(!f1||day>=f1)&&(!t1||day<=t1);});
+
+  // Intervalles
+  const ivs=(MRAW.clicks||[]).filter(c=>{const d=c.t?.split('T')[0];return(!f1||d>=f1)&&(!t1||d<=t1);})
+    .map(c=>c.interval).filter(v=>v&&v>0&&v<300);
+  const avgI=ivs.length?ivs.reduce((a,b)=>a+b)/ivs.length:0;
+  const minI=ivs.length?Math.min(...ivs):0;
+  const maxI=ivs.length?Math.max(...ivs):0;
+
+  Object.values(mC).forEach(c=>c.destroy()); mC={};
+  const multi=s1.length>1;
+
+  document.getElementById('m-dash').innerHTML=`
+    <div class="card s3"><div class="cl">Clic gauche</div>
+      <div class="cv c1">${N(lc)}</div>
+      <div class="csub">dont ${N(dc)} double-clics</div>
+      ${a2?'<div class="cmprow"><span class="cmpv">'+N(a2.left_clicks)+'</span>'+dH(lc,a2.left_clicks)+'</div>':''}
+    </div>
+    <div class="card s3"><div class="cl">Clic droit</div>
+      <div class="cv c2">${N(rc)}</div>
+      <div class="csub">${a1.days>1?'sur '+a1.days+' jours':''}</div>
+      ${a2?'<div class="cmprow"><span class="cmpv">'+N(a2.right_clicks)+'</span>'+dH(rc,a2.right_clicks)+'</div>':''}
+    </div>
+    <div class="card s3"><div class="cl">Clic molette</div>
+      <div class="cv c6">${N(mc)}</div>
+      <div class="csub">&nbsp;</div>
+    </div>
+    <div class="card s3"><div class="cl">Total clics</div>
+      <div class="cv cw">${N(tc)}</div>
+      <div class="csub">${a1.days>1?'≈ '+Math.round(tc/a1.days)+'/jour':''}</div>
+      ${a2?'<div class="cmprow"><span class="cmpv">'+N(a2.total_clicks)+'</span>'+dH(tc,a2.total_clicks)+'</div>':''}
+    </div>
+
+    <div class="card s3"><div class="cl">Scroll</div>
+      <div class="cv c4">${N(scU+scD)}</div>
+      <div class="csub">↑ ${N(scU)} &nbsp;↓ ${N(scD)}</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)">Distance estimée</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--a4)">${fdist(scrollDistPx).v}<span style="font-size:12px;font-weight:400"> ${fdist(scrollDistPx).u}</span></div>
+      ${closestRef(scrollDistPx*.000264583)}
+    </div>
+    <div class="card s3"><div class="cl">Distance souris</div>
+      <div class="cv c3">${fdist(distPx).v}<span style="font-size:16px;font-weight:400;color:var(--muted)"> ${fdist(distPx).u}</span></div>
+      <div class="csub">${MS.p==='all'?'total':'estimation période'}</div>
+      ${closestRef(distPx*.000264583)}
+    </div>
+    <div class="card s3"><div class="cl">Intervalle entre clics</div>
+      <div style="margin-top:6px">
+        ${iR('Moyenne',avgI,maxI,'#4f46e5')}
+        ${iR('Min',minI,maxI,'#059669')}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:7px 0;border-top:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--muted)">Max observé</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#db2777">${maxI>0?maxI.toFixed(1)+'s':'—'}</span>
+      </div>
+    </div>
+    <div class="card s3"><div class="cl">Répartition</div>
+      <div class="drow">
+        <div class="dcw"><canvas id="m-don"></canvas></div>
+        <div class="leg">
+          <div class="li"><div class="ld" style="background:#4f46e5"></div>G <b>${tc?Math.round(lc/tc*100):0}%</b></div>
+          <div class="li"><div class="ld" style="background:#db2777"></div>D <b>${tc?Math.round(rc/tc*100):0}%</b></div>
+          <div class="li"><div class="ld" style="background:#0891b2"></div>M <b>${tc?Math.round(mc/tc*100):0}%</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card ${multi?'s8':'s6'}">
+      <div class="cl">${multi?'Évolution quotidienne':'Répartition types de clics par heure'}</div>
+      <div class="hw h220"><canvas id="m-main"></canvas></div>
+    </div>
+    <div class="card ${multi?'s4':'s6'}">
+      <div class="cl">Par écran</div>
+      <div class="blist" id="m-split"></div>
+      <div class="cl" style="margin-top:14px">Écrans par heure</div>
+      <div class="hw h130"><canvas id="m-screenhour"></canvas></div>
+    </div>
+
+    <div class="card s6">
+      <div class="cl">Heatmap des clics</div>
+      <div class="hmap-tabs">
+        <button class="htab on"  onclick="setHmap('left')"  >Gauche</button>
+        <button class="htab r"   onclick="setHmap('right')" >Droit</button>
+        <button class="htab m"   onclick="setHmap('middle')">Molette</button>
+      </div>
+      <div class="scol" id="m-heat"></div>
+    </div>
+
+    <div class="card s3">
+      <div class="cl">Drag & Drop</div>
+      <div class="cv c4">${N(dragCnt)}</div>
+      <div class="csub">drags</div>
+      <div class="dgrid" style="margin-top:8px">
+        <div class="dcell"><div class="dv">${fdist(dragDist).v}<span style="font-size:10px;font-weight:400;color:var(--muted)"> ${fdist(dragDist).u}</span></div><div class="dl">dist. totale</div></div>
+        <div class="dcell"><div class="dv">${avgDD>0?(avgDD/1000).toFixed(2):'—'}<span style="font-size:10px;font-weight:400;color:var(--muted)"> s</span></div><div class="dl">durée moy.</div></div>
+        <div class="dcell"><div class="dv">${avgDDist>0?Math.round(avgDDist):'—'}<span style="font-size:10px;font-weight:400;color:var(--muted)"> px</span></div><div class="dl">dist. moy.</div></div>
+        <div class="dcell"><div class="dv">${lc>0?Math.round(dragCnt/lc*100):0}<span style="font-size:10px;font-weight:400;color:var(--muted)"> %</span></div><div class="dl">% clic G</div></div>
+      </div>
+      ${closestRef(dragDist*.000264583)}
+    </div>
+
+    <div class="card s4">
+      <div class="cl">Carte des drags</div>
+      <canvas id="m-dragmap" width="460" height="280" style="border-radius:7px;margin-top:8px;width:100%;display:block"></canvas>
+    </div>
+
+    ${s1.length>7?`
+    <div class="card s6"><div class="cl">Top jours</div>
+      <table class="dtable" id="m-top"></table>
+    </div>`:''}
+  `;
+
+  buildMMain(s1,s2,multi,daily,f1,t1);
+  buildDonut('m-don',[lc,rc,mc],['#4f46e5','#db2777','#0891b2']);
+  buildMSplit(screens,a1.per_screen,totSC);
+  buildScreenHour('m-screenhour',daily,screens,f1,t1);
+  buildHeatmap(screens,MRAW,hmapMode);
+  buildDragMap(drags,screens);
+  if(s1.length>7) buildTopDays(s1,'m-top');
+}
+
+function setHmap(mode){
+  hmapMode=mode;
+  document.querySelectorAll('.htab').forEach(b=>{
+    b.classList.remove('on');
+    if((mode==='left'&&!b.classList.contains('r')&&!b.classList.contains('m'))
+      ||(mode==='right'&&b.classList.contains('r'))
+      ||(mode==='middle'&&b.classList.contains('m'))) b.classList.add('on');
+  });
+  if(!MRAW) return;
+  const screens=MRAW.screen_info?.screens||[];
+  buildHeatmap(screens,MRAW,mode);
+}
+
+function iR(l,v,mx,c){
+  const p=mx>0?Math.min(100,v/mx*100):0;
+  return '<div class="brow"><span class="blbl">'+l+'</span>'
+    +'<div class="bbg"><div class="bfill" style="width:'+p+'%;background:'+c+'"></div></div>'
+    +'<span class="bval">'+(v>0?v.toFixed(1)+'s':'—')+'</span></div>';
+}
+
+
+function buildDonut(id,data,colors){
+  const el=document.getElementById(id);if(!el)return;
+  const c=new Chart(el,{type:'doughnut',
+    data:{datasets:[{data:data.map(v=>v||0.001),backgroundColor:colors,borderWidth:0,hoverOffset:4}]},
+    options:{cutout:'68%',responsive:true,maintainAspectRatio:true,plugins:CO.plugins}});
+  if(id.startsWith('m')) mC[id]=c; else kC[id]=c;
+}
+
+function buildMSplit(screens,ps,tot){
+  const el=document.getElementById('m-split');if(!el)return;
+  const col={external:'#4f46e5',laptop:'#db2777'};
+  const list=screens.length?screens.map(s=>({id:s.id,lbl:s.label})):[{id:'laptop',lbl:'Laptop'}];
+  el.innerHTML=list.map(({id,lbl})=>{
+    const n=ps[id]||0,p=Math.round(n/tot*100);
+    return '<div class="brow"><span class="blbl">'+lbl+'</span>'
+      +'<div class="bbg"><div class="bfill" style="width:'+p+'%;background:'+(col[id]||'#6b7280')+'"></div></div>'
+      +'<span class="bval">'+N(n)+'</span></div>';
+  }).join('');
+}
+
+function buildHeatmap(screens,raw,mode){
+  const el=document.getElementById('m-heat');if(!el)return;
+  el.innerHTML='';
+  const [f1,t1]=drange(MS.p,MS.f,MS.t);
+  const hmap_key=mode==='right'?'heatmap_right':mode==='middle'?'heatmap_middle':'heatmap';
+
+  // Agréger les heatmaps depuis daily_stats (nouveau format : clé "screenId:rx,ry")
+  // + fallback sur l'ancien format global heatmap_per_screen si daily_stats vide
+  const byScreen={}; // {screenId: {"rx,ry": count}}
+  const daily=raw.daily_stats||{};
+  const days=fdays(daily,f1,t1);
+  let hasNewFormat=false;
+  for(const[,d]of days){
+    const hm=d[hmap_key]||{};
+    for(const[k,v]of Object.entries(hm)){
+      // Nouveau format : "screenId:rx,ry"
+      const colon=k.indexOf(':');
+      if(colon>-1){
+        hasNewFormat=true;
+        const sid=k.slice(0,colon), coord=k.slice(colon+1);
+        if(!byScreen[sid])byScreen[sid]={};
+        byScreen[sid][coord]=(byScreen[sid][coord]||0)+v;
+      }
+    }
+  }
+  // Fallback : ancien format global heatmap_per_screen
+  if(!hasNewFormat){
+    const oldKey=mode==='right'?'heatmap_right_per_screen':mode==='middle'?'heatmap_middle_per_screen':'heatmap_per_screen';
+    const oldHps=raw[oldKey]||{};
+    for(const[sid,pts]of Object.entries(oldHps)){
+      byScreen[sid]=byScreen[sid]||{};
+      for(const[k,v]of Object.entries(pts)) byScreen[sid][k]=(byScreen[sid][k]||0)+v;
+    }
+  }
+
+  const W=430;
+  const list=screens.length?screens:[{id:'laptop',label:'Laptop',width:1920,height:1080}];
+  const acol=mode==='right'?'#fbcfe8':mode==='middle'?'#bae6fd':'#c7d2fe';
+
+  list.forEach((s,i)=>{
+    if(i>0){const c=document.createElement('div');c.className='sconn';el.appendChild(c);}
+    const H=Math.round(W*s.height/s.width);
+    const pts=Object.entries(byScreen[s.id]||{}).map(([k,v])=>{
+      const[x,y]=k.split(',').map(Number);return{x,y,v};
+    });
+    const tot=pts.reduce((a,p)=>a+p.v,0);
+    const wrap=document.createElement('div');wrap.className='swrap';wrap.style.cssText='position:relative;width:'+W+'px;height:'+H+'px';
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    cv.style.cssText='display:block;border:1px solid '+acol+';border-radius:7px';
+    const b=document.createElement('div');b.className='sbadge';
+    b.textContent=s.label+' — '+s.width+'×'+s.height;
+    const cnt=document.createElement('div');cnt.className='scount';cnt.textContent=N(tot)+' clics';
+    wrap.appendChild(cv);wrap.appendChild(b);wrap.appendChild(cnt);el.appendChild(wrap);
+    drawHeat(cv,pts,s.width,s.height);
+  });
+}
+
+function drawHeat(canvas,pts,sw,sh){
+  const W=canvas.width,H=canvas.height,ctx=canvas.getContext('2d');
+  ctx.fillStyle='#111827';ctx.fillRect(0,0,W,H);
+  if(!pts.length){ctx.fillStyle='#4b5563';ctx.font='11px Inter';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('Aucune donnée',W/2,H/2);return;}
+  const mx=Math.max(...pts.map(p=>p.v));
+  pts.sort((a,b)=>a.v-b.v);
+  const PAD=8,sx=(W-PAD*2)/sw,sy=(H-PAD*2)/sh;
+  for(const{x,y,v}of pts){
+    const px=PAD+x*sx,py=PAD+y*sy,t=v/mx,r=Math.max(5,5+t*20);
+    const rd=Math.round(t*255),gr=Math.round(40*(1-t)),bl=Math.round(255*(1-t*.85));
+    const g=ctx.createRadialGradient(px,py,0,px,py,r);
+    g.addColorStop(0,'rgba('+rd+','+gr+','+bl+','+(0.5+t*.5)+')');
+    g.addColorStop(.6,'rgba('+rd+','+gr+','+bl+','+(0.1+t*.15)+')');
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  }
+}
+
+function buildDragMap(drags,screens){
+  const cv=document.getElementById('m-dragmap');if(!cv||!drags.length)return;
+  const W=cv.width,H=cv.height,ctx=cv.getContext('2d');
+  // Fond sombre
+  ctx.fillStyle='#111827';ctx.fillRect(0,0,W,H);
+  if(!drags.length){ctx.fillStyle='#4b5563';ctx.font='11px Inter';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('Aucun drag enregistré',W/2,H/2);return;}
+  // Trouver bounds
+  const vl=MRAW.screen_info?.virtual_left||0,vt=MRAW.screen_info?.virtual_top||0;
+  const vw=MRAW.screen_info?.virtual_width||1920,vh=MRAW.screen_info?.virtual_height||1080;
+  const PAD=10,sx=(W-PAD*2)/vw,sy=(H-PAD*2)/vh;
+  const toX=x=>PAD+(x-vl)*sx, toY=y=>PAD+(y-vt)*sy;
+  // Dessiner écrans
+  for(const s of(screens||[])){
+    ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=1;
+    ctx.strokeRect(toX(s.left),toY(s.top),(s.right-s.left)*sx,(s.bottom-s.top)*sy);
+  }
+  // Dessiner drags
+  const mxDist=Math.max(...drags.map(d=>d.dist_px),1);
+  for(const d of drags){
+    const t=d.dist_px/mxDist;
+    const r=Math.round(t*255),g=Math.round(100*(1-t)),b=Math.round(255*(1-t*.9));
+    ctx.strokeStyle='rgba('+r+','+g+','+b+',0.7)';
+    ctx.lineWidth=Math.max(0.5,t*2);
+    ctx.beginPath();
+    ctx.moveTo(toX(d.x0),toY(d.y0));
+    ctx.lineTo(toX(d.x1),toY(d.y1));
+    ctx.stroke();
+    // Flèche
+    const angle=Math.atan2(d.y1-d.y0,d.x1-d.x0);
+    const ex=toX(d.x1),ey=toY(d.y1);
+    ctx.beginPath();
+    ctx.moveTo(ex,ey);
+    ctx.lineTo(ex-5*Math.cos(angle-0.4),ey-5*Math.sin(angle-0.4));
+    ctx.lineTo(ex-5*Math.cos(angle+0.4),ey-5*Math.sin(angle+0.4));
+    ctx.closePath();ctx.fillStyle='rgba('+r+','+g+','+b+',0.8)';ctx.fill();
+  }
+}
+
+// Toutes les références de distance (en mètres)
+const ALL_REFS=[
+  // ── Zone Micro ────────────────────────────────────────────────────
+  {icon:'🔬',name:'Épaisseur d\'un CD',m:.0012},
+  {icon:'🦴',name:'Étrier (plus petit os)',m:.003},
+  {icon:'💧',name:'Goutte de pluie (orage)',m:.005},
+  {icon:'🐌',name:'Blue Dragon (limace de mer)',m:.030},
+  {icon:'🍫',name:'Carré de chocolat',m:.035},
+  {icon:'🎾',name:'Balle de tennis',m:.067},
+  {icon:'🐹',name:'Hamster nain',m:.10},
+  {icon:'💿',name:'Diamètre d\'un DVD',m:.120},
+  {icon:'🚽',name:'Hauteur cuvette WC',m:.400},
+  {icon:'🍕',name:'Pizza Sénior (diamètre)',m:.330},
+  {icon:'🦴',name:'Fémur humain',m:.450},
+  {icon:'🛹',name:'Skateboard standard',m:.800},
+  {icon:'👶',name:'Bébé 18 mois',m:.820},
+  {icon:'🛡️',name:'Bouclier Captain America',m:.760},
+  {icon:'🕯️',name:'Plus grande bougie du monde',m:1.0},
+  {icon:'🚲',name:'Vélo adulte (hauteur guidon)',m:1.05},
+  {icon:'🦒',name:'Girafe nouveau-né',m:1.90},
+  {icon:'🕹️',name:'Borne d\'arcade Pac-Man',m:1.70},
+  {icon:'🧤',name:'Envergure LeBron James',m:2.13},
+  {icon:'🛌',name:'Matelas King Size',m:2.03},
+  {icon:'🏓',name:'Table de Ping-Pong',m:2.74},
+  {icon:'🐯',name:'Tigre de Sibérie (avec queue)',m:3.30},
+  {icon:'🚗',name:'Fiat 500 (longueur)',m:3.55},
+  {icon:'🛶',name:'Canoë monoplace',m:3.70},
+  {icon:'🐊',name:'Crocodile du Nil',m:4.50},
+  {icon:'🐘',name:'Éléphant d\'Afrique (hauteur)',m:4.0},
+  // ── Zone Transition 5m → 100m ─────────────────────────────────────
+  {icon:'🦒',name:'Girafe mâle',m:5.5},
+  {icon:'🚐',name:'Minibus standard',m:8.5},
+  {icon:'🏠',name:'Maison de ville 3 étages',m:12},
+  {icon:'🎬',name:'Lettre panneau HOLLYWOOD',m:15},
+  {icon:'🚛',name:'Semi-remorque',m:18.5},
+  {icon:'🦈',name:'Requin-baleine (taille max)',m:22},
+  {icon:'🏊',name:'Piscine olympique (largeur)',m:25},
+  {icon:'🐋',name:'Baleine bleue',m:28},
+  {icon:'✈️',name:'1er vol des frères Wright',m:37},
+  {icon:'✝️',name:'Christ Rédempteur (hauteur)',m:38},
+  {icon:'🚀',name:'Navette spatiale (longueur)',m:41},
+  {icon:'🏛️',name:'Arc de Triomphe (hauteur)',m:50},
+  {icon:'🏊',name:'Piscine olympique (longueur)',m:50},
+  {icon:'🗼',name:'Tour de Pise (hauteur)',m:56},
+  {icon:'🚀',name:'Falcon 9 (1er étage)',m:59},
+  {icon:'🏟️',name:'Colisée (hauteur murs)',m:62},
+  {icon:'⚽',name:'Terrain de foot (largeur)',m:65},
+  {icon:'✈️',name:'Boeing 747-8 (longueur)',m:76},
+  {icon:'✈️',name:'Airbus A380 (envergure)',m:80},
+  {icon:'🗽',name:'Statue de la Liberté (sol→flambeau)',m:93},
+  {icon:'🕰️',name:'Big Ben (hauteur)',m:96},
+  // ── Zone 100m → 400m ─────────────────────────────────────────────
+  {icon:'🗿',name:'Sendai Daikannon (statue)',m:100},
+  {icon:'🗿',name:'Rodina Mat (Kiev)',m:102},
+  {icon:'🗿',name:'Guanyin de Nanshan',m:108},
+  {icon:'🚀',name:'Saturn V (Apollo)',m:111},
+  {icon:'🌲',name:'Hyperion (plus grand séquoia)',m:115.6},
+  {icon:'🗿',name:'Laykyun Sekkya (Myanmar)',m:116},
+  {icon:'🚀',name:'Starship SpaceX',m:121},
+  {icon:'✈️',name:'Concorde (2× longueurs)',m:124},
+  {icon:'🎡',name:'London Eye (diamètre)',m:135},
+  {icon:'🏛️',name:'Grande Pyramide de Gizeh',m:138},
+  {icon:'💦',name:'Jet d\'eau de Genève',m:141},
+  {icon:'⛪',name:'Cathédrale d\'Amiens (longueur)',m:145},
+  {icon:'🏢',name:'Tour CMA CGM (Marseille)',m:147},
+  {icon:'🧊',name:'Yamal (brise-glace nucléaire)',m:150},
+  {icon:'⛪',name:'Cathédrale de Cologne (flèches)',m:157},
+  {icon:'🎡',name:'Tour Blackpool',m:158},
+  {icon:'🏢',name:'Tour Alto (La Défense)',m:161},
+  {icon:'🏢',name:'Tour Part-Dieu (Lyon)',m:165},
+  {icon:'🎡',name:'High Roller Las Vegas (diamètre)',m:167},
+  {icon:'🏢',name:'Tour Trinity (La Défense)',m:170},
+  {icon:'🏢',name:'Tour Saint-Gobain (La Défense)',m:178},
+  {icon:'🏢',name:'Tour Gherkin (Londres)',m:181},
+  {icon:'🗿',name:'Statue de l\'Unité (Inde)',m:184},
+  {icon:'⛪',name:'Basilique Saint-Pierre (longueur)',m:187},
+  {icon:'🏢',name:'Tour TotalEnergies (La Défense)',m:190},
+  {icon:'🌉',name:'Gateway Arch (Saint-Louis)',m:193},
+  {icon:'🏢',name:'Main Tower (Francfort)',m:200},
+  {icon:'🏢',name:'Tour Montparnasse (Paris)',m:212},
+  {icon:'🌉',name:'Pont de Normandie (pylônes)',m:215},
+  {icon:'🏗️',name:'Barrage de Hoover',m:221},
+  {icon:'🌉',name:'Pont du Golden Gate (pylônes)',m:227},
+  {icon:'🏢',name:'Tour First (La Défense)',m:231},
+  {icon:'🏢',name:'One Canada Square (Londres)',m:235},
+  {icon:'🛸',name:'Graf Zeppelin (longueur)',m:237},
+  {icon:'🛸',name:'Hindenburg (longueur)',m:245},
+  {icon:'🏗️',name:'Barrage de Mauvoisin',m:251},
+  {icon:'🌉',name:'Pont du Grand Belt (pylônes)',m:254},
+  {icon:'🏢',name:'Commerzbank Tower (Francfort)',m:260},
+  {icon:'⚓',name:'Porte-avions Charles de Gaulle',m:262},
+  {icon:'🏗️',name:'Barrage de Vajont',m:265},
+  {icon:'🚢',name:'Titanic (longueur)',m:269},
+  {icon:'🏢',name:'22 Bishopsgate (Londres)',m:278},
+  {icon:'🏗️',name:'Barrage Grande-Dixence',m:285},
+  {icon:'🌉',name:'Pont Akashi-Kaikyo (pylônes)',m:299},
+  {icon:'🏢',name:'Gran Torre Santiago (Chili)',m:302},
+  {icon:'🏢',name:'Kingdom Centre (Riyad)',m:305},
+  {icon:'🏢',name:'The Shard (Londres)',m:311},
+  {icon:'🌉',name:'Pont Russky (pylônes)',m:320},
+  {icon:'🏨',name:'Burj Al Arab (Dubaï)',m:323},
+  {icon:'🗼',name:'Tour Eiffel (avec antennes)',m:332},
+  {icon:'⚓',name:'USS Gerald R. Ford (longueur)',m:338},
+  {icon:'🌉',name:'Viaduc de Millau (pile P2)',m:343},
+  {icon:'🚢',name:'Queen Mary 2 (longueur)',m:348},
+  {icon:'🎰',name:'Stratosphere Tower (Las Vegas)',m:351},
+  {icon:'🚢',name:'Wonder of the Seas (longueur)',m:363},
+  {icon:'🏢',name:'Bank of America Tower (NYC)',m:366},
+  {icon:'📡',name:'Fernsehturm Berlin',m:369},
+  {icon:'🏢',name:'Empire State Building (toit)',m:381},
+  {icon:'🛢️',name:'Pétrolier Marseille (longueur)',m:385},
+  {icon:'🏢',name:'30 Hudson Yards (NYC)',m:388},
+  {icon:'🏗️',name:'Abraj Al Bait (base)',m:400},
+  // ── Zone Mégastructures 400m → 1000m ─────────────────────────────
+  {icon:'🏢',name:'Two IFC (Hong Kong)',m:412},
+  {icon:'🏢',name:'Princess Tower (Dubaï)',m:423},
+  {icon:'🏢',name:'432 Park Avenue (NYC)',m:433},
+  {icon:'🏢',name:'Empire State Building (antenne)',m:443},
+  {icon:'🏢',name:'Tour Zifeng (Nanjing)',m:453},
+  {icon:'🏢',name:'Tours Petronas (KL)',m:463},
+  {icon:'🏢',name:'Central Park Tower (NYC)',m:473},
+  {icon:'🏢',name:'Shanghai World Financial Center',m:492},
+  {icon:'🏢',name:'Taipei 101',m:508},
+  {icon:'🏢',name:'Tour CITIC (Pékin)',m:528},
+  {icon:'🗽',name:'One World Trade Center (NYC)',m:541},
+  {icon:'📡',name:'Tour CN (Toronto)',m:553},
+  {icon:'🏢',name:'Lotte World Tower (Séoul)',m:565},
+  {icon:'🏢',name:'Goldin Finance 117 (Tianjin)',m:597},
+  {icon:'📡',name:'Makkah Clock Tower (sommet)',m:601},
+  {icon:'📡',name:'Canton Tower (Guangzhou)',m:610},
+  {icon:'🏢',name:'Shanghai Tower',m:632},
+  {icon:'📡',name:'Tokyo Skytree',m:644},
+  {icon:'🏢',name:'Merdeka 118 (Kuala Lumpur)',m:679},
+  {icon:'🌉',name:'Pont des Dardanelles (portée)',m:700},
+  {icon:'🛢️',name:'Seawise Giant (pétrolier)',m:715},
+  {icon:'🏢',name:'Burj Khalifa (Dubaï)',m:828},
+  {icon:'🏗️',name:'Sky Mile Tower (projet Tokyo)',m:850},
+  {icon:'🗼',name:'3× Tour Eiffel empilées',m:990},
+  {icon:'🏗️',name:'Jeddah Tower (en construction)',m:1000},
+  // ── Zone Géants 1km → 100km ───────────────────────────────────────
+  {icon:'🚇',name:'Tunnel sous la Manche (profondeur)',m:4000},
+  {icon:'⛰️',name:'Mont Blanc',m:4808},
+  {icon:'☁️',name:'Altitude nuages Cirrus',m:8000},
+  {icon:'🏔️',name:'Sommet de l\'Everest',m:8849},
+  {icon:'✈️',name:'Altitude croisière avion',m:12000},
+  {icon:'🧊',name:'Calotte glaciaire Antarctique (max)',m:15000},
+  {icon:'🗺️',name:'Traversée de Paris (V→M)',m:18000},
+  {icon:'🗽',name:'Île de Manhattan (longueur)',m:21600},
+  {icon:'🌉',name:'Pont Danyang-Kunshan (sur eau)',m:25000},
+  {icon:'⚛️',name:'Anneau du LHC (CERN)',m:27000},
+  {icon:'🌊',name:'Largeur du Pas de Calais',m:33800},
+  {icon:'🏃',name:'Marathon',m:42195},
+  {icon:'🚇',name:'Tunnel sous la Manche (longueur)',m:50450},
+  {icon:'🌍',name:'Croûte terrestre (épaisseur moy.)',m:55000},
+  {icon:'💧',name:'Lac Léman (plus grande largeur)',m:60000},
+  {icon:'☢️',name:'Zone d\'exclusion Tchernobyl',m:64000},
+  {icon:'🗺️',name:'Paris → Beauvais',m:67000},
+  {icon:'🌉',name:'Grand Pont de Seto (Japon)',m:70000},
+  {icon:'🌫️',name:'Début de la mésosphère',m:75000},
+  {icon:'🗺️',name:'Paris → Chartres',m:91000},
+  {icon:'🚀',name:'Ligne de Kármán (frontière espace)',m:100000},
+  // ── Zone Continentale 100km → 10 000km ───────────────────────────
+  {icon:'🚄',name:'Paris → Lyon',m:391000},
+  {icon:'🗺️',name:'Longueur de la Corée du Sud',m:1000000},
+  {icon:'✈️',name:'Londres → Rome',m:1435000},
+  {icon:'✈️',name:'Paris → Casablanca',m:1900000},
+  {icon:'✈️',name:'Paris → Moscou',m:2485000},
+  {icon:'✈️',name:'Le Caire → Lagos',m:3000000},
+  {icon:'🌏',name:'Australie (largeur max)',m:4003000},
+  {icon:'🌊',name:'Atlantique (point le plus étroit)',m:4500000},
+  {icon:'✈️',name:'Paris → Dubaï',m:5245000},
+  {icon:'✈️',name:'Paris → New York',m:5837000},
+  {icon:'🌊',name:'Fleuve Amazone (longueur)',m:6400000},
+  {icon:'✈️',name:'Londres → Delhi',m:6700000},
+  {icon:'✈️',name:'Paris → Pékin',m:8200000},
+  {icon:'✈️',name:'Paris → Tokyo',m:9700000},
+  // ── Zone Cosmique ─────────────────────────────────────────────────
+  {icon:'🌍',name:'Diamètre de la Terre',m:12742000},
+  {icon:'🧱',name:'Grande Muraille de Chine (cumulée)',m:21196000},
+  {icon:'🌍',name:'Circonférence de la Terre',m:40075000,fixed:true},
+  {icon:'🪐',name:'Diamètre de Neptune',m:49244000},
+  {icon:'🪐',name:'Anneau E de Saturne (diamètre)',m:1000000000},
+  {icon:'☀️',name:'Diamètre du Soleil',m:1392700000},
+  {icon:'💡',name:'Lumière en 1 seconde',m:299792000},
+  {icon:'🌕',name:'Terre → Lune',m:384400000,fixed:true},
+  {icon:'♀️',name:'Vénus → Terre (au plus proche)',m:38000000000},
+  {icon:'🔴',name:'Mars → Terre (moyenne)',m:78000000000},
+  {icon:'☀️',name:'Terre → Soleil (1 UA)',m:149600000000,fixed:true},
+];
+
+function closestRef(totalM){
+  // Trouve la référence non-fixed la plus proche (en dessous ou au-dessus)
+  const candidates=ALL_REFS.filter(r=>!r.fixed);
+  // Plus proche en valeur absolue de ratio à 1
+  let best=null, bestDiff=Infinity;
+  for(const r of candidates){
+    const ratio=totalM/r.m;
+    const diff=Math.abs(Math.log(ratio)); // log pour traiter sym. ×2 et /2
+    if(diff<bestDiff){bestDiff=diff;best=r;}
+  }
+  if(!best) return '';
+  const ratio=totalM/best.m;
+  let txt;
+  if(ratio>=1) txt='≈ '+ratio.toFixed(1)+'× '+best.name;
+  else txt='≈ '+(ratio*100).toFixed(0)+'% de '+best.name;
+  return '<div style="margin-top:10px;padding:7px 8px;background:var(--s2);border:1px solid var(--border);border-radius:7px;font-size:12px">'
+    +'<span style="font-size:15px;margin-right:6px">'+best.icon+'</span>'
+    +'<span style="color:var(--muted)">'+txt+'</span></div>';
+}
+
+// Histogramme utilisation écrans par heure
+function buildScreenHour(id,daily,screens,f,t){
+  const el=document.getElementById(id);if(!el)return;
+  const days=fdays(daily,f,t);
+  // Par écran, par heure
+  const byScreen={};
+  for(const s of(screens.length?screens:[{id:'laptop',label:'Laptop'}])) byScreen[s.id]=Array(24).fill(0);
+  for(const[,d]of days){
+    const hs=d.hours||{};
+    const pse=d.per_screen||{};
+    const totH=Object.values(hs).reduce((a,b)=>a+b,0)||1;
+    const totS=Object.values(pse).reduce((a,b)=>a+b,0)||1;
+    for(const[h,n]of Object.entries(hs)){
+      // Répartir les clics de cette heure proportionnellement aux écrans
+      for(const[sid,sn]of Object.entries(pse)){
+        if(byScreen[sid]) byScreen[sid][+h]+=(n*(sn/totS));
+      }
+    }
+  }
+  const cols={external:'#4f46e5',laptop:'#db2777'};
+  const labels=Array.from({length:24},(_,i)=>i+'h');
+  const datasets=Object.entries(byScreen).map(([sid,data])=>({
+    label:(screens.find(s=>s.id===sid)?.label)||sid,
+    data:data.map(v=>Math.round(v)),
+    backgroundColor:(cols[sid]||'#6b7280')+'cc',
+    borderRadius:2,borderSkipped:false,
+  }));
+  mC[id]=new Chart(el,{type:'bar',data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{...CO.plugins,legend:{display:datasets.length>1,labels:{color:'#6b7280',font:{size:10},boxWidth:8}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#9ca3af',maxTicksLimit:12}},
+              y:{stacked:true,grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af'}}}}});
+}
+
+function buildHour(id,hours,color){
+  const el=document.getElementById(id);if(!el)return;
+  const hv=Array.from({length:24},(_,i)=>hours[String(i)]||0);
+  const c=new Chart(el,{type:'bar',
+    data:{labels:Array.from({length:24},(_,i)=>i+'h'),
+      datasets:[{data:hv,backgroundColor:color+'aa',borderRadius:3,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:CO.plugins,
+      scales:{x:{grid:{display:false},ticks:{color:'#9ca3af',maxTicksLimit:12}},y:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af'}}}}});
+  if(id.startsWith('m')) mC[id]=c; else kC[id]=c;
+}
+
+function buildTopDays(series,id){
+  const el=document.getElementById(id);if(!el)return;
+  const sorted=[...series].sort((a,b)=>b.v-a.v).slice(0,10);
+  const mx=sorted[0]?.v||1;
+  el.innerHTML='<thead><tr><th>Jour</th><th>Clics</th><th style="width:100px">Activité</th></tr></thead><tbody>'
+    +sorted.map(({d,v})=>'<tr><td>'+dlbl(d)+'</td><td style="font-family:\'JetBrains Mono\',monospace">'+N(v)+'</td>'
+      +'<td><div class="mb"><div class="mf" style="width:'+Math.round(v/mx*100)+'%;background:#4f46e5"></div></div></td></tr>'
+    ).join('')+'</tbody>';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER KEYBOARD
+// ═══════════════════════════════════════════════════════════════════
+function renderKeyboard(){
+  if(!KRAW) return;
+  const daily=KRAW.daily_stats||{};
+  const [f1,t1]=drange(KS.p,KS.f,KS.t);
+  const a1=aggK(daily,f1,t1); const s1=dseries(daily,f1,t1,'keystrokes');
+  let a2=null,s2=null;
+  if(KS.cp){const[f2,t2]=drange(KS.cp);a2=aggK(daily,f2,t2);s2=dseries(daily,f2,t2,'keystrokes');}
+
+  const ks=a1.keystrokes,wt=a1.words_typed,lt=a1.letters,di=a1.digits,spc=a1.spaces;
+  const del=a1.deletes,nav=a1.navigations,mod=a1.modifiers,ent=a1.enters,sym=a1.symbols;
+  const wpm=KRAW.current_wpm||0;
+  const avgKI=(KRAW.avg_key_interval_sec||0)*1000;
+
+  // Top keys période
+  const klog=(KRAW.keystrokes_log||[]).filter(k=>{const d=k.t?.split('T')[0];return(!f1||d>=f1)&&(!t1||d<=t1);});
+  const topP={};
+  for(const k of klog) topP[k.key]=(topP[k.key]||0)+1;
+  const topArr=Object.entries(topP).sort((a,b)=>b[1]-a[1]).slice(0,24);
+  const topMx=topArr[0]?.[1]||1;
+
+  // Top mots période — sans stopwords, groupés par stem (vocab_stems des daily_stats)
+  const wlog=(KRAW.words_log||[]).filter(w=>{const d=w.t?.split('T')[0];return(!f1||d>=f1)&&(!t1||d<=t1);});
+  // Mots de contenu seulement (s===0 ou s absent = ancien format sans flag)
+  const wlogContent=wlog.filter(w=>!w.s);
+  // Jours filtrés pour agréger vocab_stems
+  const kdays=fdays(daily,f1,t1);
+  // Agréger vocab_stems sur la période depuis daily_stats
+  const stemAgg={}; // {stem: {canonical, count, forms}}
+  for(const[,d]of kdays){
+    for(const[st,sv]of Object.entries(d.vocab_stems||{})){
+      if(!stemAgg[st]) stemAgg[st]={canonical:sv.canonical,count:0,forms:{}};
+      stemAgg[st].count+=sv.count;
+      for(const[fm,fc]of Object.entries(sv.forms||{}))
+        stemAgg[st].forms[fm]=(stemAgg[st].forms[fm]||0)+fc;
+    }
+  }
+  // Recalculer canonique après agrégation
+  for(const sv of Object.values(stemAgg)){
+    if(Object.keys(sv.forms).length)
+      sv.canonical=Object.entries(sv.forms).sort((a,b)=>b[1]-a[1])[0][0];
+  }
+  const topStems=Object.entries(stemAgg).sort((a,b)=>b[1].count-a[1].count).slice(0,15);
+  const vocabSize=Object.keys(stemAgg).length; // nb de stems uniques = taille vocabulaire
+
+  // Fallback ancien format (pas de vocab_stems) : filtre stopwords côté JS
+  const topWords=topStems.length
+    ? topStems  // nouveau format
+    : Object.entries(
+        wlog.reduce((acc,w)=>{if(!STOPWORDS_JS.has(w.w)&&w.w.length>=3)acc[w.w]=(acc[w.w]||0)+1;return acc;},{}))
+      .sort((a,b)=>b[1]-a[1]).slice(0,15)
+      .map(([w,c])=>([w,{canonical:w,count:c,forms:{[w]:c}}]));
+
+  // Stopwords stats (pour affichage)
+  const wlogStop=wlog.filter(w=>w.s===1);
+  const totalWords=wlog.length, contentWords=wlogContent.length, stopWords=wlogStop.length;
+
+  // Shortcuts période
+  const scArr=Object.entries(a1.shortcuts).sort((a,b)=>b[1]-a[1]).slice(0,12);
+
+  Object.values(kC).forEach(c=>c.destroy()); kC={};
+  const multi=s1.length>1;
+
+  document.getElementById('k-dash').innerHTML=`
+    <div class="card s3"><div class="cl">Frappes totales</div>
+      <div class="cv c1">${N(ks)}</div>
+      <div class="csub">${a1.days>1?'≈ '+Math.round(ks/a1.days)+'/jour':''}</div>
+      ${a2?'<div class="cmprow"><span class="cmpv">'+N(a2.keystrokes)+'</span>'+dH(ks,a2.keystrokes)+'</div>':''}
+    </div>
+    <div class="card s3"><div class="cl">Mots tapés</div>
+      <div class="cv c3">${N(wt)}</div>
+      <div class="csub">${a1.days>1?'≈ '+Math.round(wt/a1.days)+'/jour':''}</div>
+      ${a2?'<div class="cmprow"><span class="cmpv">'+N(a2.words_typed)+'</span>'+dH(wt,a2.words_typed)+'</div>':''}
+    </div>
+    <div class="card s3"><div class="cl">WPM — fenêtre 1h</div>
+      <div class="wpm-big">${wpm}</div>
+      <div class="csub">mots/min (moyenne glissante)</div>
+    </div>
+    <div class="card s3"><div class="cl">Corrections (⌫)</div>
+      <div class="cv c2">${N(del)}</div>
+      <div class="csub">${ks>0?Math.round(del/ks*100)+'% des frappes':''}</div>
+    </div>
+
+    <div class="card ${multi?'s8':'s6'}">
+      <div class="cl">${multi?'Évolution quotidienne':'Répartition types de touches par heure'}</div>
+      <div class="hw h220"><canvas id="k-main"></canvas></div>
+    </div>
+    <div class="card ${multi?'s4':'s6'}">
+      <div class="cl">Répartition</div>
+      <div class="drow">
+        <div class="dcw"><canvas id="k-don"></canvas></div>
+        <div class="leg">
+          <div class="li"><div class="ld" style="background:#4f46e5"></div>Lettres <b>${ks?Math.round(lt/ks*100):0}%</b></div>
+          <div class="li"><div class="ld" style="background:#059669"></div>Espaces <b>${ks?Math.round(spc/ks*100):0}%</b></div>
+          <div class="li"><div class="ld" style="background:#d97706"></div>Chiffres <b>${ks?Math.round(di/ks*100):0}%</b></div>
+          <div class="li"><div class="ld" style="background:#7c3aed"></div>Modif. <b>${ks?Math.round(mod/ks*100):0}%</b></div>
+          <div class="li"><div class="ld" style="background:#db2777"></div>Suppr. <b>${ks?Math.round(del/ks*100):0}%</b></div>
+        </div>
+      </div>
+      ${multi?'':'<div class="cl" style="margin-top:12px">Rythme</div>'
+        +'<div class="blist">'
+        +kCR('Intervalle moy.',avgKI,avgKI,'#4f46e5','ms')
+        +kCR('Entrées ↵',ent,ks,'#059669','x')
+        +kCR('Navigation',nav,ks,'#0891b2','x')
+        +'</div>'}
+    </div>
+
+    <div class="card s6">
+      <div class="cl">Top 24 touches — cette période</div>
+      <div class="kgrid" id="k-top"></div>
+    </div>
+
+    <div class="card s3">
+      <div class="cl">Catégories détail</div>
+      <div class="blist">
+        ${kCR('Lettres',lt,ks,'#4f46e5','')}
+        ${kCR('Espaces',spc,ks,'#059669','')}
+        ${kCR('Chiffres',di,ks,'#d97706','')}
+        ${kCR('Modificateurs',mod,ks,'#7c3aed','')}
+        ${kCR('Suppressions',del,ks,'#db2777','')}
+        ${kCR('Navigation',nav,ks,'#0891b2','')}
+        ${kCR('Entrées',ent,ks,'#65a30d','')}
+        ${kCR('Fonctions',a1.other,ks,'#9ca3af','')}
+        ${kCR('Symboles',sym,ks,'#6b7280','')}
+      </div>
+    </div>
+
+    <div class="card s3">
+      <div class="cl">Raccourcis utilisés</div>
+      <div class="sclist" id="k-sc">
+        ${scArr.length?'':'<div style="color:var(--muted);font-size:12px;padding:18px 0;text-align:center">Aucun raccourci détecté</div>'}
+      </div>
+    </div>
+
+    <div class="card s3">
+      <div class="cl">📚 Vocabulaire</div>
+      <div class="cv c1" style="font-size:32px">${N(vocabSize)}</div>
+      <div class="csub">mots distincts (par racine)</div>
+      <div style="margin-top:10px">
+        <div class="brow"><span class="blbl">Mots contenu</span>
+          <div class="bbg"><div class="bfill" style="width:${totalWords>0?Math.round(contentWords/totalWords*100):0}%;background:#4f46e5"></div></div>
+          <span class="bval">${N(contentWords)}</span></div>
+        <div class="brow"><span class="blbl">Mots liaison</span>
+          <div class="bbg"><div class="bfill" style="width:${totalWords>0?Math.round(stopWords/totalWords*100):0}%;background:#9ca3af"></div></div>
+          <span class="bval">${N(stopWords)}</span></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px">
+        ${totalWords>0?Math.round(contentWords/totalWords*100):0}% contenu — ${totalWords>0?Math.round(stopWords/totalWords*100):0}% liaison
+      </div>
+    </div>
+
+    <div class="card s6">
+      <div class="cl">Top 15 mots — contenu uniquement</div>
+      <div id="k-words">
+        ${topWords.length?'':'<div style="color:var(--muted);font-size:12px;padding:18px 0;text-align:center">Pas encore de données</div>'}
+      </div>
+    </div>
+
+    ${multi?`<div class="card s6">
+      <div class="cl">Activité horaire (période)</div>
+      <div class="hw h160"><canvas id="k-hour"></canvas></div>
+    </div>`:''}
+  `;
+
+  buildKMain(s1,s2,multi,daily,f1,t1);
+  buildDonut('k-don',[lt,spc,di,mod,del,sym],['#4f46e5','#059669','#d97706','#7c3aed','#db2777','#6b7280']);
+  buildTopKeys(topArr,topMx);
+  buildShortcuts(scArr);
+  buildTopWords(topWords);
+  if(multi) buildHour('k-hour',a1.hours,'#4f46e5');
+}
+
+function kCR(l,v,tot,c,unit){
+  const p=tot>0?Math.min(100,v/tot*100):0;
+  const display=unit==='ms'?Math.round(v)+'ms':unit==='x'?N(v):N(v);
+  return '<div class="brow"><span class="blbl">'+l+'</span>'
+    +'<div class="bbg"><div class="bfill" style="width:'+p+'%;background:'+c+'"></div></div>'
+    +'<span class="bval">'+display+'</span></div>';
+}
+
+function buildClickTypesByHour(id,daily,f,t){
+  const el=document.getElementById(id);if(!el)return;
+  const days=fdays(daily,f,t);
+  const lH=Array(24).fill(0),rH=Array(24).fill(0),mH=Array(24).fill(0),drH=Array(24).fill(0);
+  for(const[d,v]of days){
+    // clics par heure : on a hours={h:total} et les ratios L/R/M depuis les totaux du jour
+    const tot=v.total_clicks||1;
+    const lR=(v.left_clicks||0)/tot, rR=(v.right_clicks||0)/tot, mR=(v.middle_clicks||0)/tot;
+    const dR=(v.drags||0)/(v.left_clicks||1);
+    for(const[h,n]of Object.entries(v.hours||{})){
+      lH[+h]+= Math.round(n*lR);
+      rH[+h]+= Math.round(n*rR);
+      mH[+h]+= Math.round(n*mR);
+      drH[+h]+=Math.round(n*lR*dR);
+    }
+  }
+  const labels=Array.from({length:24},(_,i)=>i+'h');
+  if(mC[id]) mC[id].destroy();
+  mC[id]=new Chart(el,{type:'bar',
+    data:{labels,datasets:[
+      {label:'Gauche', data:lH, backgroundColor:'#4f46e5cc',borderRadius:2,borderSkipped:false,stack:'s'},
+      {label:'Droit',  data:rH, backgroundColor:'#db2777cc',borderRadius:2,borderSkipped:false,stack:'s'},
+      {label:'Molette',data:mH, backgroundColor:'#0891b2cc',borderRadius:2,borderSkipped:false,stack:'s'},
+      {label:'Drag',   data:drH,backgroundColor:'#d97706cc',borderRadius:2,borderSkipped:false,stack:'s'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{...CO.plugins,legend:{display:true,labels:{color:'#6b7280',font:{size:10},boxWidth:8,padding:8}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#9ca3af',maxTicksLimit:12}},
+              y:{stacked:true,grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af'}}}}});
+}
+
+function buildKeyTypesByHour(id,daily,f,t){
+  const el=document.getElementById(id);if(!el)return;
+  const days=fdays(daily,f,t);
+  const cats={letters:'#4f46e5',spaces:'#059669',digits:'#d97706',modifiers:'#7c3aed',
+               deletes:'#db2777',navigations:'#0891b2',enters:'#65a30d',symbols:'#6b7280'};
+  const byHour=Object.fromEntries(Object.keys(cats).map(c=>[c,Array(24).fill(0)]));
+  for(const[,v]of days){
+    const ks=v.keystrokes||1;
+    const ratios=Object.fromEntries(Object.keys(cats).map(c=>[c,(v[c]||0)/ks]));
+    for(const[h,n]of Object.entries(v.hours||{})){
+      for(const c of Object.keys(cats)) byHour[c][+h]+=Math.round(n*ratios[c]);
+    }
+  }
+  const labels=Array.from({length:24},(_,i)=>i+'h');
+  const catLabels={letters:'Lettres',spaces:'Espaces',digits:'Chiffres',modifiers:'Modif.',
+                   deletes:'Suppr.',navigations:'Nav.',enters:'Entrées',symbols:'Symboles'};
+  if(kC[id]) kC[id].destroy();
+  kC[id]=new Chart(el,{type:'bar',
+    data:{labels,datasets:Object.entries(cats).map(([c,col])=>({
+      label:catLabels[c],data:byHour[c],
+      backgroundColor:col+'cc',borderRadius:2,borderSkipped:false,stack:'s',
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{...CO.plugins,legend:{display:true,labels:{color:'#6b7280',font:{size:10},boxWidth:8,padding:6}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#9ca3af',maxTicksLimit:12}},
+              y:{stacked:true,grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af'}}}}});
+}
+
+function buildMMain(s1,s2,multi,daily,f,t){
+  const el=document.getElementById('m-main');if(!el)return;
+  if(!multi){buildClickTypesByHour('m-main',daily,f,t);return;}
+  const labels=s1.map(d=>dlbl(d.d));
+  const ds=[{label:plbl(MS.p,MS.f,MS.t),data:s1.map(d=>d.v),
+    borderColor:'#4f46e5',backgroundColor:'rgba(79,70,229,.07)',fill:true,tension:.3,pointRadius:2,borderWidth:2}];
+  if(s2) ds.push({label:plbl(MS.cp),data:s2.map(d=>d.v),
+    borderColor:'#db2777',backgroundColor:'rgba(219,39,119,.04)',fill:true,tension:.3,pointRadius:2,borderWidth:2,borderDash:[5,3]});
+  if(mC['m-main']) mC['m-main'].destroy();
+  mC['m-main']=new Chart(el,{type:'line',data:{labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{...CO.plugins,legend:{display:!!s2,labels:{color:'#6b7280',font:{size:11},boxWidth:10}}},
+      scales:{x:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',maxTicksLimit:12,maxRotation:45}},
+              y:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af'}}}}});
+}
+
+function buildKMain(s1,s2,multi,daily,f,t){
+  const el=document.getElementById('k-main');if(!el)return;
+  if(!multi){buildKeyTypesByHour('k-main',daily,f,t);return;}
+  const labels=s1.map(d=>dlbl(d.d));
+  const ds=[{label:plbl(KS.p,KS.f,KS.t),data:s1.map(d=>d.v),
+    borderColor:'#4f46e5',backgroundColor:'rgba(79,70,229,.07)',fill:true,tension:.3,pointRadius:2,borderWidth:2}];
+  if(s2) ds.push({label:plbl(KS.cp),data:s2.map(d=>d.v),
+    borderColor:'#db2777',backgroundColor:'rgba(219,39,119,.04)',fill:true,tension:.3,pointRadius:2,borderWidth:2,borderDash:[5,3]});
+  if(kC['k-main']) kC['k-main'].destroy();
+  kC['k-main']=new Chart(el,{type:'line',data:{labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{...CO.plugins,legend:{display:!!s2,labels:{color:'#6b7280',font:{size:11},boxWidth:10}}},
+      scales:{x:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af',maxTicksLimit:12,maxRotation:45}},
+              y:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af'}}}}});
+}
+
+function buildTopKeys(arr,mx){
+  const el=document.getElementById('k-top');if(!el)return;
+  el.innerHTML=arr.map(([key,n])=>{
+    const p=Math.round(n/mx*100);
+    return '<div class="kitem"><span class="kk"><span class="kchip">'+key+'</span></span>'
+      +'<div class="bbg" style="height:4px"><div class="bfill" style="width:'+p+'%;background:#4f46e5"></div></div>'
+      +'<span class="kn">'+N(n)+'</span></div>';
+  }).join('');
+}
+
+function buildShortcuts(arr){
+  const el=document.getElementById('k-sc');if(!el||!arr.length)return;
+  el.innerHTML=arr.map(([name,n])=>
+    '<div class="scitem"><span class="scname">'+name+'</span><span class="scn">'+N(n)+'</span></div>'
+  ).join('');
+}
+
+function buildTopWords(words){
+  const el=document.getElementById('k-words');if(!el||!words.length)return;
+  // words = [[stem, {canonical, count, forms}], ...]  (nouveau format)
+  //      ou [[word, count], ...]                       (ancien format fallback)
+  const isNew=words[0]&&words[0][1]&&typeof words[0][1]==='object'&&'canonical'in words[0][1];
+  if(!isNew){
+    // Fallback ancien format
+    const mx=words[0][1]||1;
+    el.innerHTML='<div class="blist">'+words.map(([w,n],i)=>{
+      const medals=['🥇','🥈','🥉']; const m=medals[i]||'';
+      return '<div class="brow"><span class="blbl">'+(m||'')+' '+w+'</span>'
+        +'<div class="bbg"><div class="bfill" style="width:'+Math.round(n/mx*100)+'%;background:#4f46e5"></div></div>'
+        +'<span class="bval">'+N(n)+'</span></div>';
+    }).join('')+'</div>';
+    return;
+  }
+  const mx=words[0][1].count||1;
+  const medals=['🥇','🥈','🥉'];
+  el.innerHTML='<div class="blist" style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">'+
+    words.map(([stem,sv],i)=>{
+      const p=Math.round(sv.count/mx*100);
+      // Top 3 variantes (hors canonique si confondues)
+      const forms=Object.entries(sv.forms||{}).sort((a,b)=>b[1]-a[1]);
+      const variants=forms.length>1
+        ? forms.slice(0,4).map(([f,c])=>`<span style="font-size:9px;color:var(--muted);background:#f3f4f6;border-radius:3px;padding:1px 4px;margin:1px">${f} <b style="color:#6b7280">${c}</b></span>`).join('')
+        : '';
+      return '<div style="padding:6px 0;border-bottom:1px solid var(--border)">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<span style="font-size:12px;font-weight:600">'+(medals[i]||'·')+' '+sv.canonical+'</span>'
+        +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:12px;color:var(--a1)">'+N(sv.count)+'</span>'
+        +'</div>'
+        +'<div class="bbg" style="margin:3px 0 4px"><div class="bfill" style="width:'+p+'%;background:#4f46e5"></div></div>'
+        +(variants?'<div style="display:flex;flex-wrap:wrap;gap:1px">'+variants+'</div>':'')
+        +'</div>';
+    }).join('')+'</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RECORDS
+// ═══════════════════════════════════════════════════════════════════
+const RS={p:'all',f:null,t:null};
+
+function recPeriodInit(){
+  document.getElementById('rpb').addEventListener('click',e=>{
+    const b=e.target.closest('.pb');if(!b)return;
+    RS.p=b.dataset.p;
+    document.querySelectorAll('#rpb .pb').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('rc-tag').textContent=plbl(RS.p);
+    document.getElementById('rc-cbar').classList.remove('show');
+    renderRecords();
+  });
+  document.getElementById('rc-btn').addEventListener('click',()=>{
+    const c=document.getElementById('rc-cbar');c.classList.toggle('show');
+    if(c.classList.contains('show')){const[f,t]=drange('7d');document.getElementById('rc-f').value=RS.f||f;document.getElementById('rc-t').value=RS.t||t;}
+  });
+  document.getElementById('rc-apply').addEventListener('click',()=>{
+    RS.f=document.getElementById('rc-f').value;RS.t=document.getElementById('rc-t').value;
+    if(!RS.f||!RS.t)return;RS.p='custom';
+    document.querySelectorAll('#rpb .pb').forEach(x=>x.classList.remove('on'));
+    document.getElementById('rc-btn').classList.add('on');
+    document.getElementById('rc-tag').textContent=plbl('custom',RS.f,RS.t);
+    renderRecords();
+  });
+}
+
+function distRefBlock(totalM){
+  // Tous les éléments comparatifs pour cette distance, organisés intelligemment
+  const refs=ALL_REFS.filter(r=>!r.fixed);
+  // Trouver les 4 plus proches (2 en-dessous, 2 au-dessus)
+  const below=refs.filter(r=>r.m<=totalM).sort((a,b)=>b.m-a.m).slice(0,2);
+  const above=refs.filter(r=>r.m>totalM).sort((a,b)=>a.m-b.m).slice(0,2);
+  const nearby=[...below,...above].sort((a,b)=>a.m-b.m);
+
+  // Fixed refs (Terre, Lune, Soleil) toujours présentes
+  const fixed=ALL_REFS.filter(r=>r.fixed);
+
+  const fmtRef=(r)=>{
+    const ratio=totalM/r.m;
+    let pct,label,color;
+    if(ratio>=1){pct=100;label=ratio.toFixed(1)+'×';color='var(--a3)';}
+    else{pct=Math.min(99,ratio*100);label=(ratio*100).toFixed(1)+'%';color='var(--a1)';}
+    return '<div style="margin-bottom:8px">'
+      +'<div style="display:flex;align-items:center;gap:8px;font-size:12px">'
+      +'<span style="font-size:14px">'+r.icon+'</span>'
+      +'<span style="flex:1;color:var(--muted)">'+r.name+'</span>'
+      +'<span style="font-family:\'JetBrains Mono\',monospace;font-weight:700;color:'+color+'">'+label+'</span>'
+      +'</div>'
+      +'<div class="progress-bar" style="margin-top:3px"><div class="progress-fill" style="width:'+pct+'%;background:'+color+'"></div></div>'
+      +'</div>';
+  };
+
+  return '<div style="margin-top:4px">'+nearby.map(fmtRef).join('')
+    +'<div style="margin:10px 0 6px;font-size:10px;font-family:\'JetBrains Mono\',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Objectifs cosmiques</div>'
+    +fixed.map(fmtRef).join('')+'</div>';
+}
+
+function fullDate(d){
+  const[y,mo,da]=d.split('-').map(Number);
+  return new Date(y,mo-1,da).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+}
+
+function renderRecords(){
+  const el=document.getElementById('r-dash');
+  if(!MRAW||!KRAW){el.innerHTML='<div style="text-align:center;padding:70px 0;color:var(--muted)">Données non disponibles</div>';return;}
+
+  const [f1,t1]=drange(RS.p,RS.f,RS.t);
+  const mdailyAll=MRAW.daily_stats||{}, kdailyAll=KRAW.daily_stats||{};
+  // Filtrer par période
+  const mdays=fdays(mdailyAll,f1,t1), kdays=fdays(kdailyAll,f1,t1);
+
+  if(!mdays.length&&!kdays.length){
+    el.innerHTML='<div style="text-align:center;padding:40px 0;color:var(--muted);font-size:13px">Aucune donnée pour cette période</div>';
+    return;
+  }
+
+  // ── Records souris ────────────────────────────────────────────────
+  const byClickDay  =[...mdays].sort((a,b)=>b[1].total_clicks-a[1].total_clicks);
+  const byDragDay   =[...mdays].sort((a,b)=>b[1].drags-a[1].drags);
+  const byScrollDay =[...mdays].sort((a,b)=>(b[1].scroll_dist_px||0)-(a[1].scroll_dist_px||0));
+  const bestClickDay=byClickDay[0], bestDragDay=byDragDay[0], bestScrollDay=byScrollDay[0];
+
+  // Distance souris sur la période
+  const periodDistPx=RS.p==='all'
+    ?(MRAW.total?.distance_px||0)
+    :estDist(mdailyAll,f1,t1);
+  const periodDistM=periodDistPx*.000264583;
+
+  // ── Records clavier ───────────────────────────────────────────────
+  const byKsDay  =[...kdays].sort((a,b)=>b[1].keystrokes-a[1].keystrokes);
+  const byWordDay=[...kdays].sort((a,b)=>b[1].words_typed-a[1].words_typed);
+  const bestKsDay=byKsDay[0], bestWordDay=byWordDay[0];
+
+  // Mot le plus utilisé sur la période — sans stopwords
+  const wlog=(KRAW.words_log||[]).filter(w=>{const d=w.t?.split('T')[0];return(!f1||d>=f1)&&(!t1||d<=t1);});
+  const wcount={};
+  for(const w of wlog){
+    // Exclure stopwords : flag s===1 (nouveau format) ou liste JS (ancien)
+    if(w.s===1) continue;
+    if(STOPWORDS_JS&&STOPWORDS_JS.has(w.w)) continue;
+    if(w.w.length<3) continue;
+    wcount[w.w]=(wcount[w.w]||0)+1;
+  }
+  const topWord=Object.entries(wcount).sort((a,b)=>b[1]-a[1])[0];
+
+  // ── Par jour de semaine ───────────────────────────────────────────
+  const byWday={clicks:{},ks:{}};
+  for(const[d,v]of mdays){const w=new Date(d).getDay();byWday.clicks[w]=(byWday.clicks[w]||0)+v.total_clicks;}
+  for(const[d,v]of kdays){const w=new Date(d).getDay();byWday.ks[w]=(byWday.ks[w]||0)+v.keystrokes;}
+  const wdayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+
+  // ── Par heure ─────────────────────────────────────────────────────
+  const byHour={clicks:{},ks:{}};
+  for(const[,v]of mdays)for(const[h,n]of Object.entries(v.hours||{}))byHour.clicks[h]=(byHour.clicks[h]||0)+n;
+  for(const[,v]of kdays)for(const[h,n]of Object.entries(v.hours||{}))byHour.ks[h]=(byHour.ks[h]||0)+n;
+  const bestClickHour=Object.entries(byHour.clicks).sort((a,b)=>b[1]-a[1])[0];
+  const bestKsHour   =Object.entries(byHour.ks).sort((a,b)=>b[1]-a[1])[0];
+
+  // ── Mots par jour de semaine ───────────────────────────────────────
+  const wordsByWday={};
+  for(const w of wlog){
+    const d=w.t?.split('T')[0];if(!d)continue;
+    const wd=new Date(d).getDay();
+    if(!wordsByWday[wd])wordsByWday[wd]={};
+    wordsByWday[wd][w.w]=(wordsByWday[wd][w.w]||0)+1;
+  }
+  const topWordByWday=Object.fromEntries(Object.entries(wordsByWday).map(([w,wds])=>{
+    const top=Object.entries(wds).sort((a,b)=>b[1]-a[1])[0];return[w,top?top[0]:'—'];
+  }));
+
+  // ── Streak ────────────────────────────────────────────────────────
+  const allDays=[...new Set([...Object.keys(mdailyAll),...Object.keys(kdailyAll)])].sort();
+  const today=lstr(new Date()); let streak=0;
+  for(let i=allDays.length-1;i>=0&&allDays[i]<=today;i--){
+    streak++;
+    if(i>0){const prev=new Date(allDays[i]);prev.setDate(prev.getDate()-1);if(lstr(prev)!==allDays[i-1])break;}
+  }
+
+  el.innerHTML=`
+    <div class="rec-hero">
+      <h2>Records 🏆</h2>
+      <p>${mdays.length||kdays.length} jours · ${N(mdays.reduce((s,[,d])=>s+d.total_clicks,0))} clics · ${N(kdays.reduce((s,[,d])=>s+d.keystrokes,0))} frappes · ${streak} j. consécutifs</p>
+    </div>
+
+    <div class="rec-grid">
+
+      <div class="rec-card">
+        <h3>🖱️ Records Souris</h3>
+        ${bestClickDay?'<div class="rec-item"><span class="rec-icon">🥇</span><span class="rec-label">Meilleur jour clics</span><div><span class="rec-val">'+N(bestClickDay[1].total_clicks)+' clics</span><span class="rec-date">'+fullDate(bestClickDay[0])+'</span></div></div>':''}
+        ${bestDragDay?'<div class="rec-item"><span class="rec-icon">🤚</span><span class="rec-label">Plus de drags</span><div><span class="rec-val">'+N(bestDragDay[1].drags)+' drags</span><span class="rec-date">'+fullDate(bestDragDay[0])+'</span></div></div>':''}
+        ${bestScrollDay?'<div class="rec-item"><span class="rec-icon">↕️</span><span class="rec-label">Meilleur scroll</span><div><span class="rec-val">'+fdist(bestScrollDay[1].scroll_dist_px||0).v+' '+fdist(bestScrollDay[1].scroll_dist_px||0).u+'</span><span class="rec-date">'+fullDate(bestScrollDay[0])+'</span></div></div>':''}
+        ${bestClickHour?'<div class="rec-item"><span class="rec-icon">⏰</span><span class="rec-label">Heure la + active</span><span class="rec-val">'+bestClickHour[0]+'h — '+N(bestClickHour[1])+' clics</span></div>':''}
+      </div>
+
+      <div class="rec-card">
+        <h3>⌨️ Records Clavier</h3>
+        ${bestKsDay?'<div class="rec-item"><span class="rec-icon">🥇</span><span class="rec-label">Meilleur jour frappes</span><div><span class="rec-val">'+N(bestKsDay[1].keystrokes)+' touches</span><span class="rec-date">'+fullDate(bestKsDay[0])+'</span></div></div>':''}
+        ${bestWordDay?'<div class="rec-item"><span class="rec-icon">📝</span><span class="rec-label">Plus de mots</span><div><span class="rec-val">'+N(bestWordDay[1].words_typed)+' mots</span><span class="rec-date">'+fullDate(bestWordDay[0])+'</span></div></div>':''}
+        ${topWord?'<div class="rec-item"><span class="rec-icon">💬</span><span class="rec-label">Mot le plus tapé</span><div><span class="rec-val" style="font-family:\'JetBrains Mono\',monospace">'+topWord[0]+'</span><span class="rec-date">'+N(topWord[1])+'× sur la période</span></div></div>':''}
+        ${bestKsHour?'<div class="rec-item"><span class="rec-icon">⏰</span><span class="rec-label">Heure la + active</span><span class="rec-val">'+bestKsHour[0]+'h — '+N(bestKsHour[1])+' touches</span></div>':''}
+        <div class="rec-item"><span class="rec-icon">⚡</span><span class="rec-label">WPM (1h glissante)</span><span class="rec-val">${KRAW.current_wpm||0} wpm</span></div>
+      </div>
+
+      <div class="rec-card">
+        <h3>📅 Par jour de semaine</h3>
+        <table class="wday-table">
+          <thead><tr>
+            <th style="font-size:10px;color:var(--muted);text-align:left;padding:4px 6px">Jour</th>
+            <th style="text-align:right;font-size:10px;color:var(--muted);padding:4px 6px">Clics</th>
+            <th style="text-align:right;font-size:10px;color:var(--muted);padding:4px 6px">Frappes</th>
+            <th style="text-align:right;font-size:10px;color:var(--muted);padding:4px 6px">Mot fréquent</th>
+          </tr></thead>
+          <tbody>
+          ${[1,2,3,4,5,6,0].map(w=>'<tr>'
+            +'<td>'+wdayNames[w]+'</td>'
+            +'<td style="text-align:right">'+N(byWday.clicks[w]||0)+'</td>'
+            +'<td style="text-align:right">'+N(byWday.ks[w]||0)+'</td>'
+            +'<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-size:11px">'+(topWordByWday[w]||'—')+'</td>'
+            +'</tr>').join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rec-card" style="grid-column:span 1">
+        <h3>📏 Distance souris — ${plbl(RS.p,RS.f,RS.t)}</h3>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--a3)">
+          ${fdist(periodDistPx).v}<span style="font-size:13px;font-weight:400;color:var(--muted)"> ${fdist(periodDistPx).u}</span>
+        </div>
+        ${distRefBlock(periodDistM)}
+      </div>
+
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
